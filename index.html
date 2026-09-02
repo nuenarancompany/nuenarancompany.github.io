@@ -5,160 +5,412 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>کۆمپانیای نوینەران - سیستەمی بەڕێوەبردن</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- This script allows the website to read Excel files directly -->
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans Arabic', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
+        body { font-family: 'Noto Sans Arabic', 'Segoe UI', sans-serif; }
+
+        .status-paid   { background: #dcfce7; color: #166534; }
+        .status-unpaid { background: #fee2e2; color: #991b1b; }
+
+        #tableWrap { overflow-x: auto; }
+
+        table { border-collapse: collapse; width: 100%; min-width: 700px; }
+        th    { background: #1e3a5f; color: #fff; padding: 10px 12px; font-weight: 600;
+                position: sticky; top: 0; z-index: 10; white-space: nowrap; }
+        td    { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+        tr:hover td { background: #f0f9ff; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        tr:nth-child(even):hover td { background: #e0f2fe; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px;
+                 font-size: 0.75rem; font-weight: 600; }
+
+        .complex-tag { display: inline-block; padding: 2px 8px; border-radius: 4px;
+                       font-size: 0.72rem; background: #dbeafe; color: #1e40af; }
+
+        #searchBox { direction: rtl; }
+
+        .stat-card { background: #fff; border-radius: 10px; padding: 16px 20px;
+                     box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+        .stat-num  { font-size: 1.8rem; font-weight: 700; color: #1e3a5f; }
+        .stat-lbl  { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-slate-100 text-gray-800 min-h-screen">
 
-    <nav class="bg-blue-900 text-white p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-2xl font-bold">کۆمپانیای نوینەران</h1>
+<!-- ── HEADER ─────────────────────────────────────────────────── -->
+<header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
+        <div>
+            <h1 class="text-xl font-bold tracking-wide">کۆمپانیای نوینەران</h1>
+            <p class="text-blue-200 text-sm mt-0.5">سیستەمی بەڕێوەبردنی پارەدانی مانگانە</p>
         </div>
-    </nav>
-
-    <div class="container mx-auto mt-8 p-4">
-        
-        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded" id="loadingMessage">
-            <p class="font-bold">تکایە چاوەڕێ بکە...</p>
-            <p>خەریکی خوێندنەوەی فایلی ئێکسڵەکەین. ئەمە چەند چرکەیەک دەخایەنێت.</p>
+        <div class="flex gap-2 flex-wrap">
+            <select id="complexFilter"
+                class="bg-blue-800 border border-blue-600 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                <option value="">هەموو کۆمپلێکسەکان</option>
+            </select>
+            <select id="statusFilter"
+                class="bg-blue-800 border border-blue-600 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                <option value="">هەموو جۆرەکان</option>
+                <option value="مولك">خاوەن مولک</option>
+                <option value="كریچی">کرێجی</option>
+            </select>
         </div>
+    </div>
+</header>
 
-        <div class="flex justify-between items-center bg-white p-4 rounded shadow mb-6 hidden" id="controls">
-            <div class="flex gap-4 w-1/2">
-                <input type="text" id="searchInput" placeholder="گەڕان بەدوای ناوی دانیشتوو یان ژمارەی خانوو..." class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500" onkeyup="searchTable()">
-            </div>
-            <div>
-                <select id="complexFilter" class="border border-gray-300 p-2 rounded focus:outline-none" onchange="searchTable()">
-                    <option value="all">هەموو کۆمەڵگەکان</option>
-                </select>
-            </div>
+<!-- ── LOADING STATE ──────────────────────────────────────────── -->
+<div id="loadingBar" class="max-w-7xl mx-auto px-4 py-8">
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center gap-4">
+        <svg class="animate-spin h-7 w-7 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+        </svg>
+        <div>
+            <p class="font-semibold text-blue-800">داتا بارکردنە...</p>
+            <p class="text-blue-600 text-sm mt-1" id="loadingDetail">فایلی Excel ئامادە دەکرێت</p>
         </div>
+    </div>
+</div>
 
-        <div class="bg-white rounded shadow overflow-hidden hidden" id="tableContainer">
-            <table class="w-full text-right" id="dataTable">
-                <thead class="bg-gray-200 text-gray-700">
-                    <tr>
-                        <th class="p-4 border-b">کۆمەڵگە</th>
-                        <th class="p-4 border-b">ژمارەی خانوو</th>
-                        <th class="p-4 border-b">ناوی دانیشتوو</th>
-                        <th class="p-4 border-b">خاوەن / کرێچی</th>
-                        <th class="p-4 border-b">مۆبایل</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- The 1600 houses will magically appear here -->
-                </tbody>
-            </table>
+<!-- ── ERROR STATE ────────────────────────────────────────────── -->
+<div id="errorBar" class="max-w-7xl mx-auto px-4 py-8 hidden">
+    <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+        <h3 class="font-bold text-red-800 text-lg">❌ هەڵە رووی دا</h3>
+        <p id="errorMsg" class="text-red-700 mt-2 text-sm font-mono"></p>
+        <p class="text-red-600 text-sm mt-3">
+            دڵنیابەرەوە کە فایلی <strong>data.xlsx</strong> لە هەمان فۆڵدەری <strong>index.html</strong> دایە لە GitHub.
+        </p>
+    </div>
+</div>
+
+<!-- ── MAIN CONTENT ───────────────────────────────────────────── -->
+<main id="mainContent" class="max-w-7xl mx-auto px-4 py-6 hidden">
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+            <div class="stat-num" id="statTotal">0</div>
+            <div class="stat-lbl">کۆی خانووەکان</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num text-blue-700" id="statSheets">0</div>
+            <div class="stat-lbl">کۆمپلێکس</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num text-green-700" id="statOwners">0</div>
+            <div class="stat-lbl">خاوەن مولک</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-num text-orange-600" id="statRenters">0</div>
+            <div class="stat-lbl">کرێجی</div>
         </div>
     </div>
 
-    <script>
-        let allHouses = [];
+    <!-- Search -->
+    <div class="mb-4">
+        <input id="searchBox" type="search" placeholder="🔍  گەڕان — ناو، ژمارەی خانوو، تەلەفۆن..."
+            class="w-full md:w-96 px-4 py-2.5 rounded-xl border border-gray-300 shadow-sm
+                   focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none bg-white text-sm">
+    </div>
 
-        async function loadExcelData() {
-            try {
-                // Connects to the Excel file you uploaded to GitHub
-                const response = await fetch('data.xlsx');
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                
-                // Loops through Marina, Qandil, Telar City, etc.
-                workbook.SheetNames.forEach(sheetName => {
-                    if (sheetName === 'خشته' || sheetName === 'Sheet1') return; 
+    <!-- Result count -->
+    <p class="text-sm text-gray-500 mb-3">
+        <span id="resultCount">0</span> خانوو نیشاندرا
+    </p>
 
-                    const sheet = workbook.Sheets[sheetName];
-                    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                    
-                    if (data.length < 2) return;
+    <!-- Table -->
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div id="tableWrap">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>کۆمپلێکس</th>
+                        <th>ژمارەی خانوو</th>
+                        <th>ناوی سکنی</th>
+                        <th>جۆر</th>
+                        <th>تەلەفۆن</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div id="emptyState" class="hidden py-16 text-center text-gray-400">
+            <p class="text-4xl mb-3">🔍</p>
+            <p class="font-semibold">هیچ ئەنجامێک نەدۆزرایەوە</p>
+        </div>
+    </div>
+</main>
 
-                    let headers = data[0].map(h => String(h).trim());
-                    
-                    // Automatically finds the correct columns even if they move
-                    let nameIdx = headers.findIndex(h => h.includes('ناوی'));
-                    let numIdx = headers.findIndex(h => h.includes('خانوو') || h === 'ژ');
-                    let statusIdx = headers.findIndex(h => h.includes('خاوەن') && !h.includes('ناوی'));
-                    
-                    let phoneCols = [];
-                    for(let i=0; i<headers.length; i++) {
-                        if(headers[i].includes('مولک') || headers[i].includes('صاحب') || headers[i].includes('كريَجى') || headers[i].includes('كرێجى')) {
-                            phoneCols.push(i);
-                        }
-                    }
-                    
-                    if (phoneCols.length === 0) phoneCols = [7, 8, 9, 10]; // Fallback just in case
-                    if (nameIdx === -1) nameIdx = 3;
-                    if (numIdx === -1) numIdx = 1;
-                    if (statusIdx === -1) statusIdx = 5;
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+//  PER-SHEET COLUMN MAP
+//  Derived from direct inspection of the actual Excel file structure.
+//  Each sheet has different column offsets — this is the ground truth.
+//
+//  Fields:
+//    headerRow : 0-based index of the row that contains column headers
+//    seqCol    : sequential number column (used to detect valid data rows)
+//    nameCol   : resident name column
+//    houseCol  : house/unit number column
+//    statusCol : owner/renter status column
+//    phoneCols : array of columns that may contain phone numbers
+//    paymentsStart : first column index where monthly payment data begins
+// ─────────────────────────────────────────────────────────────────────────────
+const SHEET_MAP = {
+    'تەلار ستی':           { headerRow:1, seqCol:1,  nameCol:2,  houseCol:3,  statusCol:4,  phoneCols:[7,9],   paymentsStart:10 },
+    'مارینا (١)':          { headerRow:1, seqCol:2,  nameCol:3,  houseCol:4,  statusCol:5,  phoneCols:[9,10],  paymentsStart:11 },
+    'مارینا (2)':          { headerRow:1, seqCol:2,  nameCol:3,  houseCol:4,  statusCol:5,  phoneCols:[8,9,11],paymentsStart:12 },
+    'مارينا (3)':          { headerRow:1, seqCol:1,  nameCol:2,  houseCol:1,  statusCol:3,  phoneCols:[6,8],   paymentsStart:9  },
+    'مارينا (4)':          { headerRow:1, seqCol:0,  nameCol:1,  houseCol:0,  statusCol:2,  phoneCols:[6],     paymentsStart:7  },
+    'قنديل':               { headerRow:1, seqCol:0,  nameCol:2,  houseCol:1,  statusCol:3,  phoneCols:[6],     paymentsStart:7  },
+    'دوبەی ستی':           { headerRow:1, seqCol:1,  nameCol:2,  houseCol:3,  statusCol:4,  phoneCols:[7,8],   paymentsStart:9  },
+    'شوقەكان تەلار ستی':   { headerRow:2, seqCol:1,  nameCol:2,  houseCol:1,  statusCol:3,  phoneCols:[6],     paymentsStart:7  },
+    'دووكان':              { headerRow:1, seqCol:0,  nameCol:1,  houseCol:0,  statusCol:2,  phoneCols:[4],     paymentsStart:5  },
+    'پێشانگا':             { headerRow:1, seqCol:0,  nameCol:1,  houseCol:0,  statusCol:2,  phoneCols:[5],     paymentsStart:6  },
+};
 
-                    const select = document.getElementById('complexFilter');
-                    const option = document.createElement('option');
-                    option.value = sheetName;
-                    option.text = sheetName;
-                    select.appendChild(option);
+const SKIP_SHEETS = new Set(['خشته', 'Sheet1']);
 
-                    for (let i = 1; i < data.length; i++) {
-                        let row = data[i];
-                        if (!row[numIdx] || String(row[numIdx]).trim() === '') continue; 
+// ─────────────────────────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────────────────────────
+let allHouses = [];
+let filtered  = [];
 
-                        let phones = phoneCols.map(idx => row[idx]).filter(p => p && p !== 0).join(' - ');
+// ─────────────────────────────────────────────────────────────────────────────
+//  FETCH + PARSE
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadExcelData() {
+    const detail = document.getElementById('loadingDetail');
 
-                        allHouses.push({
-                            complex: sheetName,
-                            houseNum: row[numIdx] || 'نەزانراو',
-                            name: row[nameIdx] || 'نەزانراو',
-                            status: row[statusIdx] || '',
-                            phone: phones || 'نییە'
-                        });
-                    }
+    try {
+        // Cache-bust: append timestamp so GitHub CDN never serves a stale binary
+        const url = `data.xlsx?v=${Date.now()}`;
+        detail.textContent = 'فایل دانلۆد دەکرێت...';
+
+        const response = await fetch(url, { cache: 'no-store' });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText} — بڕوانە کە فایلی data.xlsx لە GitHub رِێپۆزیتۆری هەیە.`);
+        }
+
+        detail.textContent = 'فایلی Excel ڕووکەش دەکرێت...';
+        // Read as ArrayBuffer — the only correct method for binary XLSX
+        const arrayBuffer = await response.arrayBuffer();
+
+        detail.textContent = 'شیتەکان پارس دەکرێن...';
+        const workbook = XLSX.read(arrayBuffer, {
+            type:       'array',
+            cellDates:  false,
+            cellNF:     false,
+            cellStyles: false,   // skip style data — faster parse
+        });
+
+        // ── PARSE SHEETS ──────────────────────────────────────────────────
+        for (const sheetName of workbook.SheetNames) {
+            if (SKIP_SHEETS.has(sheetName)) continue;
+
+            const map = SHEET_MAP[sheetName];
+            if (!map) continue;   // unknown sheet — skip silently
+
+            const sheet = workbook.Sheets[sheetName];
+            // header:1 → raw 2D array, no header inference
+            const rows  = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
+
+            // Data rows start right after the header row
+            const dataStart = map.headerRow + 1;
+
+            for (let i = dataStart; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+
+                const seqVal = row[map.seqCol];
+                // Valid data rows must have a numeric sequence number
+                if (seqVal === null || seqVal === undefined || seqVal === '') continue;
+                if (typeof seqVal !== 'number' && isNaN(Number(seqVal))) continue;
+
+                const name     = cleanStr(row[map.nameCol]);
+                const houseNum = String(row[map.houseCol] ?? '').trim();
+                const status   = cleanStr(row[map.statusCol]);
+
+                if (!name && !houseNum) continue;
+
+                // Collect non-zero phone numbers from declared phone columns
+                const phones = map.phoneCols
+                    .map(idx => row[idx])
+                    .filter(v => v && v !== 0 && String(v).trim() !== '')
+                    .map(v => String(v).trim())
+                    .join(' - ');
+
+                // Count paid months: numeric non-zero values after paymentsStart
+                let paid = 0, unpaid = 0;
+                for (let c = map.paymentsStart; c < row.length; c++) {
+                    const v = row[c];
+                    if (v === null || v === undefined) continue;
+                    if (typeof v === 'number' && v !== 0) { paid++;   continue; }
+                    if (v === 0)                           { unpaid++; continue; }
+                }
+
+                allHouses.push({
+                    complex:  sheetName,
+                    houseNum: houseNum || String(seqVal),
+                    name:     name     || 'نەزانراو',
+                    status:   status   || '',
+                    phone:    phones   || 'نییە',
+                    paid,
+                    unpaid,
                 });
-
-                renderTable(allHouses);
-                document.getElementById('loadingMessage').classList.add('hidden');
-                document.getElementById('controls').classList.remove('hidden');
-                document.getElementById('tableContainer').classList.remove('hidden');
-
-            } catch (error) {
-                console.error("Error reading file:", error);
-                document.getElementById('loadingMessage').innerHTML = "<p class='text-red-600 font-bold'>هەڵەیەک ڕوویدا لە خوێندنەوەی فایلەکە. دڵنیابە ناوی فایلەکە بە تەواوی 'data.xlsx' یە لە ناو گیت‌هەب.</p>";
             }
         }
 
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            data.forEach(house => {
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-gray-50 border-b';
-                tr.innerHTML = `
-                    <td class="p-4 font-bold text-blue-800">${house.complex}</td>
-                    <td class="p-4 font-bold text-xl">${house.houseNum}</td>
-                    <td class="p-4 text-lg">${house.name}</td>
-                    <td class="p-4">${house.status}</td>
-                    <td class="p-4 text-lg font-bold" dir="ltr">${house.phone}</td>
-                `;
-                tbody.appendChild(tr);
-            });
+        if (allHouses.length === 0) {
+            throw new Error('هیچ داتایەک نەدۆزرایەوە — شیتەکان چاودێری بکە.');
         }
 
-        function searchTable() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const complex = document.getElementById('complexFilter').value;
-            
-            const filtered = allHouses.filter(house => {
-                const matchesSearch = String(house.name).toLowerCase().includes(query) || String(house.houseNum).toLowerCase().includes(query);
-                const matchesComplex = complex === 'all' || house.complex === complex;
-                return matchesSearch && matchesComplex;
-            });
-            
-            renderTable(filtered);
-        }
+        buildUI();
+        render();
 
-        window.onload = loadExcelData;
-    </script>
+    } catch (err) {
+        console.error(err);
+        document.getElementById('loadingBar').classList.add('hidden');
+        document.getElementById('errorBar').classList.remove('hidden');
+        document.getElementById('errorMsg').textContent = err.message;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  BUILD UI — populate filters, stats, wire events
+// ─────────────────────────────────────────────────────────────────────────────
+function buildUI() {
+    document.getElementById('loadingBar').classList.add('hidden');
+    document.getElementById('mainContent').classList.remove('hidden');
+
+    // Unique complexes
+    const complexes = [...new Set(allHouses.map(h => h.complex))];
+    const sel = document.getElementById('complexFilter');
+    complexes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        sel.appendChild(opt);
+    });
+
+    // Stats
+    const owners  = allHouses.filter(h => normalizeStatus(h.status) === 'owner').length;
+    const renters = allHouses.filter(h => normalizeStatus(h.status) === 'renter').length;
+    document.getElementById('statTotal').textContent   = allHouses.length.toLocaleString();
+    document.getElementById('statSheets').textContent  = complexes.length;
+    document.getElementById('statOwners').textContent  = owners.toLocaleString();
+    document.getElementById('statRenters').textContent = renters.toLocaleString();
+
+    // Events
+    document.getElementById('searchBox').addEventListener('input',       applyFilters);
+    document.getElementById('complexFilter').addEventListener('change',  applyFilters);
+    document.getElementById('statusFilter').addEventListener('change',   applyFilters);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  FILTER
+// ─────────────────────────────────────────────────────────────────────────────
+function applyFilters() {
+    const query   = document.getElementById('searchBox').value.trim().toLowerCase();
+    const complex = document.getElementById('complexFilter').value;
+    const status  = document.getElementById('statusFilter').value;
+
+    filtered = allHouses.filter(h => {
+        if (complex && h.complex !== complex) return false;
+        if (status  && !h.status.includes(status)) return false;
+        if (query) {
+            const haystack = `${h.name} ${h.houseNum} ${h.phone} ${h.complex}`.toLowerCase();
+            if (!haystack.includes(query)) return false;
+        }
+        return true;
+    });
+
+    render();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  RENDER TABLE
+// ─────────────────────────────────────────────────────────────────────────────
+function render() {
+    const list = filtered.length > 0 || anyFilterActive() ? filtered : allHouses;
+    const tbody = document.getElementById('tableBody');
+    const empty = document.getElementById('emptyState');
+
+    document.getElementById('resultCount').textContent = list.length.toLocaleString();
+
+    if (list.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+
+    const fragment = document.createDocumentFragment();
+    list.forEach((h, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="text-gray-400 text-sm text-center">${i + 1}</td>
+            <td><span class="complex-tag">${esc(h.complex)}</span></td>
+            <td class="font-semibold text-center">${esc(h.houseNum)}</td>
+            <td>${esc(h.name)}</td>
+            <td>${statusBadge(h.status)}</td>
+            <td class="text-sm text-gray-600 font-mono" dir="ltr">${esc(h.phone)}</td>
+        `;
+        fragment.appendChild(tr);
+    });
+
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+function cleanStr(v) {
+    if (v === null || v === undefined) return '';
+    return String(v).replace(/\s+/g, ' ').trim();
+}
+
+function esc(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function normalizeStatus(s) {
+    if (!s) return 'unknown';
+    const lower = s.toLowerCase();
+    if (lower.includes('مولك') || lower.includes('مولک') || lower.includes('موللک')) return 'owner';
+    if (lower.includes('كریچی') || lower.includes('كريجى') || lower.includes('كريَجى') || lower.includes('كريچى')) return 'renter';
+    return 'other';
+}
+
+function statusBadge(status) {
+    const n = normalizeStatus(status);
+    const label = esc(status) || 'نەزانراو';
+    if (n === 'owner')  return `<span class="badge status-paid">${label}</span>`;
+    if (n === 'renter') return `<span class="badge status-unpaid">${label}</span>`;
+    return `<span class="badge bg-gray-100 text-gray-600">${label}</span>`;
+}
+
+function anyFilterActive() {
+    return document.getElementById('searchBox').value.trim() !== ''
+        || document.getElementById('complexFilter').value !== ''
+        || document.getElementById('statusFilter').value !== '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  BOOT
+// ─────────────────────────────────────────────────────────────────────────────
+filtered = allHouses.slice();
+window.addEventListener('DOMContentLoaded', loadExcelData);
+</script>
 </body>
 </html>
