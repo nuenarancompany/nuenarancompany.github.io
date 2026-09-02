@@ -10,43 +10,105 @@
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
         body { font-family: 'Noto Sans Arabic', 'Segoe UI', sans-serif; }
 
-        .status-paid   { background: #dcfce7; color: #166534; }
-        .status-unpaid { background: #fee2e2; color: #991b1b; }
+        /* ── TABLE ── */
+        .status-paid   { background:#dcfce7; color:#166534; }
+        .status-unpaid { background:#fee2e2; color:#991b1b; }
+        #tableWrap { overflow-x:auto; }
+        table { border-collapse:collapse; width:100%; min-width:700px; }
+        th { background:#1e3a5f; color:#fff; padding:10px 12px; font-weight:600;
+             position:sticky; top:0; z-index:10; white-space:nowrap; }
+        td { padding:8px 12px; border-bottom:1px solid #e5e7eb; vertical-align:middle; }
+        tr:hover td { background:#f0f9ff; }
+        tr:nth-child(even) td { background:#f8fafc; }
+        tr:nth-child(even):hover td { background:#e0f2fe; }
+        .badge { display:inline-block; padding:2px 8px; border-radius:9999px; font-size:.75rem; font-weight:600; }
+        .complex-tag { display:inline-block; padding:2px 8px; border-radius:4px;
+                       font-size:.72rem; background:#dbeafe; color:#1e40af; }
+        #searchBox { direction:rtl; }
+        .stat-card { background:#fff; border-radius:10px; padding:16px 20px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+        .stat-num  { font-size:1.8rem; font-weight:700; color:#1e3a5f; }
+        .stat-lbl  { font-size:.8rem; color:#6b7280; margin-top:2px; }
 
-        #tableWrap { overflow-x: auto; }
+        /* ── PAYMENT GRID PANEL ── */
+        .detail-panel { display:none; background:#f8fafc; border-top:1px solid #e5e7eb; }
+        .detail-panel.open { display:block; }
 
-        table { border-collapse: collapse; width: 100%; min-width: 700px; }
-        th    { background: #1e3a5f; color: #fff; padding: 10px 12px; font-weight: 600;
-                position: sticky; top: 0; z-index: 10; white-space: nowrap; }
-        td    { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
-        tr:hover td { background: #f0f9ff; }
-        tr:nth-child(even) td { background: #f8fafc; }
-        tr:nth-child(even):hover td { background: #e0f2fe; }
+        .year-block { margin-bottom:12px; }
+        .year-label { font-size:.7rem; font-weight:700; color:#64748b;
+                      margin-bottom:6px; letter-spacing:.05em; }
 
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px;
-                 font-size: 0.75rem; font-weight: 600; }
+        .month-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:4px; }
 
-        .complex-tag { display: inline-block; padding: 2px 8px; border-radius: 4px;
-                       font-size: 0.72rem; background: #dbeafe; color: #1e40af; }
+        .month-cell {
+            aspect-ratio:1;
+            border-radius:5px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:.6rem; font-weight:700; cursor:default;
+            transition:transform .1s;
+            position:relative;
+        }
+        .month-cell:hover { transform:scale(1.15); z-index:5; }
+        .month-cell.paid    { background:#16a34a; color:#fff; }
+        .month-cell.unpaid  { background:#ef4444; color:#fff; }
+        .month-cell.nodata  { background:#e2e8f0; color:#94a3b8; }
 
-        #searchBox { direction: rtl; }
+        .month-cell .tooltip {
+            display:none; position:absolute; bottom:120%; left:50%; transform:translateX(-50%);
+            background:#1e293b; color:#fff; font-size:.6rem; padding:3px 7px;
+            border-radius:4px; white-space:nowrap; z-index:20; pointer-events:none;
+        }
+        .month-cell:hover .tooltip { display:block; }
 
-        .stat-card { background: #fff; border-radius: 10px; padding: 16px 20px;
-                     box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-        .stat-num  { font-size: 1.8rem; font-weight: 700; color: #1e3a5f; }
-        .stat-lbl  { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
+        /* mini summary bar inside panel */
+        .pay-summary { display:flex; gap:12px; font-size:.75rem; color:#475569; margin-bottom:10px; }
+        .pay-summary span { display:flex; align-items:center; gap:4px; }
+        .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+        /* row expand arrow */
+        .expand-btn { cursor:pointer; padding:4px 8px; border-radius:6px;
+                      background:#e0f2fe; color:#0369a1; font-size:.75rem;
+                      border:none; transition:background .15s; white-space:nowrap; }
+        .expand-btn:hover { background:#bae6fd; }
+
+        /* ── POS MODAL ── */
+        #posModal { display:none; position:fixed; inset:0; z-index:50;
+                    background:rgba(15,23,42,.55); backdrop-filter:blur(3px);
+                    align-items:center; justify-content:center; }
+        #posModal.open { display:flex; }
+
+        .modal-box { background:#fff; border-radius:16px; padding:28px 32px;
+                     width:min(420px,95vw); box-shadow:0 20px 60px rgba(0,0,0,.25);
+                     direction:rtl; }
+
+        .pos-label { font-size:.8rem; color:#475569; font-weight:600; margin-bottom:4px; display:block; }
+        .pos-input { width:100%; border:1.5px solid #cbd5e1; border-radius:10px;
+                     padding:10px 14px; font-size:1rem; outline:none; direction:ltr;
+                     text-align:left; transition:border-color .2s; }
+        .pos-input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
+
+        .change-display { background:linear-gradient(135deg,#1e3a5f,#1d4ed8);
+                          border-radius:12px; padding:18px 20px; text-align:center; color:#fff; }
+        .change-amount { font-size:2rem; font-weight:800; letter-spacing:-.02em; }
+        .change-lbl    { font-size:.78rem; opacity:.8; margin-top:2px; }
+        .change-display.negative { background:linear-gradient(135deg,#7f1d1d,#dc2626); }
+        .change-display.zero     { background:linear-gradient(135deg,#14532d,#16a34a); }
     </style>
 </head>
 <body class="bg-slate-100 text-gray-800 min-h-screen">
 
-<!-- ── HEADER ─────────────────────────────────────────────────── -->
+<!-- ── HEADER ── -->
 <header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
     <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
         <div>
             <h1 class="text-xl font-bold tracking-wide">کۆمپانیای نوینەران</h1>
             <p class="text-blue-200 text-sm mt-0.5">سیستەمی بەڕێوەبردنی پارەدانی مانگانە</p>
         </div>
-        <div class="flex gap-2 flex-wrap">
+        <div class="flex gap-2 flex-wrap items-center">
+            <button onclick="openPOS()"
+                class="bg-green-500 hover:bg-green-400 text-white text-sm font-bold
+                       px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
+                💵 پارەدان / گەڕاندنەوە
+            </button>
             <select id="complexFilter"
                 class="bg-blue-800 border border-blue-600 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
                 <option value="">هەموو کۆمپلێکسەکان</option>
@@ -61,7 +123,7 @@
     </div>
 </header>
 
-<!-- ── LOADING STATE ──────────────────────────────────────────── -->
+<!-- ── LOADING ── -->
 <div id="loadingBar" class="max-w-7xl mx-auto px-4 py-8">
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center gap-4">
         <svg class="animate-spin h-7 w-7 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -75,7 +137,7 @@
     </div>
 </div>
 
-<!-- ── ERROR STATE ────────────────────────────────────────────── -->
+<!-- ── ERROR ── -->
 <div id="errorBar" class="max-w-7xl mx-auto px-4 py-8 hidden">
     <div class="bg-red-50 border border-red-200 rounded-xl p-6">
         <h3 class="font-bold text-red-800 text-lg">❌ هەڵە رووی دا</h3>
@@ -86,10 +148,10 @@
     </div>
 </div>
 
-<!-- ── MAIN CONTENT ───────────────────────────────────────────── -->
+<!-- ── MAIN ── -->
 <main id="mainContent" class="max-w-7xl mx-auto px-4 py-6 hidden">
 
-    <!-- Stats row -->
+    <!-- Stats -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="stat-card">
             <div class="stat-num" id="statTotal">0</div>
@@ -116,10 +178,7 @@
                    focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none bg-white text-sm">
     </div>
 
-    <!-- Result count -->
-    <p class="text-sm text-gray-500 mb-3">
-        <span id="resultCount">0</span> خانوو نیشاندرا
-    </p>
+    <p class="text-sm text-gray-500 mb-3"><span id="resultCount">0</span> خانوو نیشاندرا</p>
 
     <!-- Table -->
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -133,6 +192,7 @@
                         <th>ناوی سکنی</th>
                         <th>جۆر</th>
                         <th>تەلەفۆن</th>
+                        <th>دەستنیشانکردن</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody"></tbody>
@@ -145,35 +205,89 @@
     </div>
 </main>
 
+<!-- ── POS MODAL ── -->
+<div id="posModal" onclick="if(event.target===this)closePOS()">
+    <div class="modal-box">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-bold text-slate-800">💵 حیساب و گەڕاندنەوە</h2>
+            <button onclick="closePOS()"
+                class="text-slate-400 hover:text-slate-700 text-xl font-bold leading-none">&times;</button>
+        </div>
+
+        <!-- Price per month -->
+        <div class="mb-4">
+            <label class="pos-label">نرخی مانگانە (IQD)</label>
+            <input id="posMonthly" type="number" class="pos-input" placeholder="٤٠٬٠٠٠"
+                   oninput="calcPOS()" value="">
+        </div>
+
+        <!-- Number of months -->
+        <div class="mb-4">
+            <label class="pos-label">ژمارەی مانگەکان</label>
+            <div class="flex gap-2 items-center">
+                <input id="posMonths" type="number" class="pos-input" placeholder="١"
+                       oninput="calcPOS()" value="" min="1">
+                <div class="text-center bg-slate-100 rounded-lg px-3 py-2 text-slate-600 text-sm whitespace-nowrap">
+                    کۆ: <strong id="posTotal" class="text-slate-800">—</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-t border-slate-200 my-5"></div>
+
+        <!-- Cash received -->
+        <div class="mb-5">
+            <label class="pos-label">پارەی وەرگیراو (IQD)</label>
+            <input id="posCash" type="number" class="pos-input text-lg font-bold"
+                   placeholder="١٠٠٬٠٠٠" oninput="calcPOS()">
+        </div>
+
+        <!-- Change display -->
+        <div id="changeDisplay" class="change-display">
+            <div class="change-lbl">بڕی ماوە بۆ گەڕاندنەوە</div>
+            <div class="change-amount" id="changeAmount">—</div>
+            <div class="change-lbl" id="changeNote"></div>
+        </div>
+
+        <!-- Legend -->
+        <div class="mt-4 flex gap-4 justify-center text-xs text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>گەڕاندنەوە</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-600 inline-block"></span>تەواو دابین کرا</span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-600 inline-block"></span>کەمە</span>
+        </div>
+    </div>
+</div>
+
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-//  PER-SHEET COLUMN MAP
-//  Derived from direct inspection of the actual Excel file structure.
-//  Each sheet has different column offsets — this is the ground truth.
-//
-//  Fields:
-//    headerRow : 0-based index of the row that contains column headers
-//    seqCol    : sequential number column (used to detect valid data rows)
-//    nameCol   : resident name column
-//    houseCol  : house/unit number column
-//    statusCol : owner/renter status column
-//    phoneCols : array of columns that may contain phone numbers
-//    paymentsStart : first column index where monthly payment data begins
+//  SHEET MAP — ground truth column offsets per sheet
 // ─────────────────────────────────────────────────────────────────────────────
 const SHEET_MAP = {
-    'تەلار ستی':           { headerRow:1, seqCol:1,  nameCol:2,  houseCol:3,  statusCol:4,  phoneCols:[7,9],   paymentsStart:10 },
-    'مارینا (١)':          { headerRow:1, seqCol:2,  nameCol:3,  houseCol:4,  statusCol:5,  phoneCols:[9,10],  paymentsStart:11 },
-    'مارینا (2)':          { headerRow:1, seqCol:2,  nameCol:3,  houseCol:4,  statusCol:5,  phoneCols:[8,9,11],paymentsStart:12 },
-    'مارينا (3)':          { headerRow:1, seqCol:1,  nameCol:2,  houseCol:1,  statusCol:3,  phoneCols:[6,8],   paymentsStart:9  },
-    'مارينا (4)':          { headerRow:1, seqCol:0,  nameCol:1,  houseCol:0,  statusCol:2,  phoneCols:[6],     paymentsStart:7  },
-    'قنديل':               { headerRow:1, seqCol:0,  nameCol:2,  houseCol:1,  statusCol:3,  phoneCols:[6],     paymentsStart:7  },
-    'دوبەی ستی':           { headerRow:1, seqCol:1,  nameCol:2,  houseCol:3,  statusCol:4,  phoneCols:[7,8],   paymentsStart:9  },
-    'شوقەكان تەلار ستی':   { headerRow:2, seqCol:1,  nameCol:2,  houseCol:1,  statusCol:3,  phoneCols:[6],     paymentsStart:7  },
-    'دووكان':              { headerRow:1, seqCol:0,  nameCol:1,  houseCol:0,  statusCol:2,  phoneCols:[4],     paymentsStart:5  },
-    'پێشانگا':             { headerRow:1, seqCol:0,  nameCol:1,  houseCol:0,  statusCol:2,  phoneCols:[5],     paymentsStart:6  },
+    'تەلار ستی':          { headerRow:1, seqCol:1, nameCol:2, houseCol:3, statusCol:4, phoneCols:[7,9],    paymentsStart:10 },
+    'مارینا (١)':         { headerRow:1, seqCol:2, nameCol:3, houseCol:4, statusCol:5, phoneCols:[9,10],   paymentsStart:11 },
+    'مارینا (2)':         { headerRow:1, seqCol:2, nameCol:3, houseCol:4, statusCol:5, phoneCols:[8,9,11], paymentsStart:12 },
+    'مارينا (3)':         { headerRow:1, seqCol:1, nameCol:2, houseCol:1, statusCol:3, phoneCols:[6,8],    paymentsStart:9  },
+    'مارينا (4)':         { headerRow:1, seqCol:0, nameCol:1, houseCol:0, statusCol:2, phoneCols:[6],      paymentsStart:7  },
+    'قنديل':              { headerRow:1, seqCol:0, nameCol:2, houseCol:1, statusCol:3, phoneCols:[6],      paymentsStart:7  },
+    'دوبەی ستی':          { headerRow:1, seqCol:1, nameCol:2, houseCol:3, statusCol:4, phoneCols:[7,8],    paymentsStart:9  },
+    'شوقەكان تەلار ستی':  { headerRow:2, seqCol:1, nameCol:2, houseCol:1, statusCol:3, phoneCols:[6],      paymentsStart:7  },
+    'دووكان':             { headerRow:1, seqCol:0, nameCol:1, houseCol:0, statusCol:2, phoneCols:[4],      paymentsStart:5  },
+    'پێشانگا':            { headerRow:1, seqCol:0, nameCol:1, houseCol:0, statusCol:2, phoneCols:[5],      paymentsStart:6  },
 };
 
-const SKIP_SHEETS = new Set(['خشته', 'Sheet1']);
+// Year ranges each sheet starts from (first year in their data column)
+const SHEET_YEAR_START = {
+    'تەلار ستی':2019, 'مارینا (١)':2019, 'مارینا (2)':2019, 'مارينا (3)':2019,
+    'مارينا (4)':2020, 'قنديل':2020, 'دوبەی ستی':2019,
+    'شوقەكان تەلار ستی':2020, 'دووكان':2019, 'پێشانگا':2020,
+};
+
+// Kurdish month names
+const MONTHS_KU = ['١','٢','٣','٤','٥','٦','٧','٨','٩','١٠','١١','١٢'];
+const MONTHS_EN = ['1','2','3','4','5','6','7','8','9','10','11','12'];
+
+const SKIP_SHEETS = new Set(['خشته','Sheet1']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  STATE
@@ -186,90 +300,70 @@ let filtered  = [];
 // ─────────────────────────────────────────────────────────────────────────────
 async function loadExcelData() {
     const detail = document.getElementById('loadingDetail');
-
     try {
-        // Cache-bust: append timestamp so GitHub CDN never serves a stale binary
-        const url = `data.xlsx?v=${Date.now()}`;
         detail.textContent = 'فایل دانلۆد دەکرێت...';
-
-        const response = await fetch(url, { cache: 'no-store' });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText} — بڕوانە کە فایلی data.xlsx لە GitHub رِێپۆزیتۆری هەیە.`);
-        }
+        const response = await fetch(`data.xlsx?v=${Date.now()}`, { cache:'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
         detail.textContent = 'فایلی Excel ڕووکەش دەکرێت...';
-        // Read as ArrayBuffer — the only correct method for binary XLSX
         const arrayBuffer = await response.arrayBuffer();
 
         detail.textContent = 'شیتەکان پارس دەکرێن...';
-        const workbook = XLSX.read(arrayBuffer, {
-            type:       'array',
-            cellDates:  false,
-            cellNF:     false,
-            cellStyles: false,   // skip style data — faster parse
-        });
+        const workbook = XLSX.read(arrayBuffer, { type:'array', cellDates:false, cellNF:false, cellStyles:false });
 
-        // ── PARSE SHEETS ──────────────────────────────────────────────────
         for (const sheetName of workbook.SheetNames) {
             if (SKIP_SHEETS.has(sheetName)) continue;
-
             const map = SHEET_MAP[sheetName];
-            if (!map) continue;   // unknown sheet — skip silently
+            if (!map) continue;
 
             const sheet = workbook.Sheets[sheetName];
-            // header:1 → raw 2D array, no header inference
-            const rows  = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
-
-            // Data rows start right after the header row
+            const rows  = XLSX.utils.sheet_to_json(sheet, { header:1, defval:null });
             const dataStart = map.headerRow + 1;
 
             for (let i = dataStart; i < rows.length; i++) {
                 const row = rows[i];
-                if (!row || row.length === 0) continue;
+                if (!row || !row.length) continue;
 
                 const seqVal = row[map.seqCol];
-                // Valid data rows must have a numeric sequence number
                 if (seqVal === null || seqVal === undefined || seqVal === '') continue;
                 if (typeof seqVal !== 'number' && isNaN(Number(seqVal))) continue;
 
                 const name     = cleanStr(row[map.nameCol]);
                 const houseNum = String(row[map.houseCol] ?? '').trim();
                 const status   = cleanStr(row[map.statusCol]);
-
                 if (!name && !houseNum) continue;
 
-                // Collect non-zero phone numbers from declared phone columns
                 const phones = map.phoneCols
                     .map(idx => row[idx])
                     .filter(v => v && v !== 0 && String(v).trim() !== '')
                     .map(v => String(v).trim())
                     .join(' - ');
 
-                // Count paid months: numeric non-zero values after paymentsStart
+                // ── Extract payment data as structured year→month array ──
+                // paymentData[yearIndex][monthIndex] = 'paid'|'unpaid'|'nodata'
+                const rawPayments = row.slice(map.paymentsStart);
+                const yearStart   = SHEET_YEAR_START[sheetName] || 2019;
+                const paymentData = buildPaymentGrid(rawPayments, yearStart);
+
                 let paid = 0, unpaid = 0;
-                for (let c = map.paymentsStart; c < row.length; c++) {
-                    const v = row[c];
-                    if (v === null || v === undefined) continue;
-                    if (typeof v === 'number' && v !== 0) { paid++;   continue; }
-                    if (v === 0)                           { unpaid++; continue; }
-                }
+                paymentData.forEach(yr => yr.months.forEach(s => {
+                    if (s === 'paid') paid++;
+                    else if (s === 'unpaid') unpaid++;
+                }));
 
                 allHouses.push({
-                    complex:  sheetName,
+                    complex: sheetName,
                     houseNum: houseNum || String(seqVal),
                     name:     name     || 'نەزانراو',
                     status:   status   || '',
                     phone:    phones   || 'نییە',
-                    paid,
-                    unpaid,
+                    paid, unpaid,
+                    paymentData,
                 });
             }
         }
 
-        if (allHouses.length === 0) {
-            throw new Error('هیچ داتایەک نەدۆزرایەوە — شیتەکان چاودێری بکە.');
-        }
+        if (allHouses.length === 0) throw new Error('هیچ داتایەک نەدۆزرایەوە');
 
         buildUI();
         render();
@@ -283,23 +377,49 @@ async function loadExcelData() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  BUILD UI — populate filters, stats, wire events
+//  BUILD PAYMENT GRID DATA
+//  rawPayments: flat array of cell values starting at paymentsStart
+//  Returns: [{year, months:['paid'|'unpaid'|'nodata', ...]}, ...]
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPaymentGrid(rawPayments, yearStart) {
+    const result = [];
+    // Each year = 12 columns. Slice into chunks.
+    for (let yi = 0; yi < 8; yi++) { // max 8 years (2019-2026)
+        const slice = rawPayments.slice(yi * 12, yi * 12 + 12);
+        if (slice.every(v => v === null || v === undefined)) break; // no more data
+
+        const months = slice.map(v => {
+            if (v === null || v === undefined) return 'nodata';
+            if (typeof v === 'number') {
+                return v === 0 ? 'paid' : 'nodata'; // 0 = paid, other numbers rare
+            }
+            if (String(v).trim() === '0' || String(v).trim() === '0.0') return 'paid';
+            return 'nodata';
+        });
+
+        // Only include year if it has at least one non-nodata cell
+        if (months.some(s => s !== 'nodata')) {
+            result.push({ year: yearStart + yi, months });
+        }
+    }
+    return result;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  BUILD UI
 // ─────────────────────────────────────────────────────────────────────────────
 function buildUI() {
     document.getElementById('loadingBar').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
 
-    // Unique complexes
     const complexes = [...new Set(allHouses.map(h => h.complex))];
     const sel = document.getElementById('complexFilter');
     complexes.forEach(c => {
         const opt = document.createElement('option');
-        opt.value = c;
-        opt.textContent = c;
+        opt.value = c; opt.textContent = c;
         sel.appendChild(opt);
     });
 
-    // Stats
     const owners  = allHouses.filter(h => normalizeStatus(h.status) === 'owner').length;
     const renters = allHouses.filter(h => normalizeStatus(h.status) === 'renter').length;
     document.getElementById('statTotal').textContent   = allHouses.length.toLocaleString();
@@ -307,10 +427,9 @@ function buildUI() {
     document.getElementById('statOwners').textContent  = owners.toLocaleString();
     document.getElementById('statRenters').textContent = renters.toLocaleString();
 
-    // Events
-    document.getElementById('searchBox').addEventListener('input',       applyFilters);
-    document.getElementById('complexFilter').addEventListener('change',  applyFilters);
-    document.getElementById('statusFilter').addEventListener('change',   applyFilters);
+    document.getElementById('searchBox').addEventListener('input',      applyFilters);
+    document.getElementById('complexFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change',  applyFilters);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -325,12 +444,11 @@ function applyFilters() {
         if (complex && h.complex !== complex) return false;
         if (status  && !h.status.includes(status)) return false;
         if (query) {
-            const haystack = `${h.name} ${h.houseNum} ${h.phone} ${h.complex}`.toLowerCase();
-            if (!haystack.includes(query)) return false;
+            const hay = `${h.name} ${h.houseNum} ${h.phone} ${h.complex}`.toLowerCase();
+            if (!hay.includes(query)) return false;
         }
         return true;
     });
-
     render();
 }
 
@@ -338,7 +456,7 @@ function applyFilters() {
 //  RENDER TABLE
 // ─────────────────────────────────────────────────────────────────────────────
 function render() {
-    const list = filtered.length > 0 || anyFilterActive() ? filtered : allHouses;
+    const list  = anyFilterActive() ? filtered : allHouses;
     const tbody = document.getElementById('tableBody');
     const empty = document.getElementById('emptyState');
 
@@ -352,8 +470,17 @@ function render() {
     empty.classList.add('hidden');
 
     const fragment = document.createDocumentFragment();
+
     list.forEach((h, i) => {
+        // ── Main row ──
         const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+
+        const paidPct   = h.paid + h.unpaid > 0 ? Math.round(h.paid / (h.paid + h.unpaid) * 100) : 0;
+        const miniBar   = `<div style="width:60px;height:5px;background:#fee2e2;border-radius:3px;display:inline-block;vertical-align:middle;overflow:hidden;">
+                             <div style="width:${paidPct}%;height:100%;background:#16a34a;"></div>
+                           </div>`;
+
         tr.innerHTML = `
             <td class="text-gray-400 text-sm text-center">${i + 1}</td>
             <td><span class="complex-tag">${esc(h.complex)}</span></td>
@@ -361,8 +488,32 @@ function render() {
             <td>${esc(h.name)}</td>
             <td>${statusBadge(h.status)}</td>
             <td class="text-sm text-gray-600 font-mono" dir="ltr">${esc(h.phone)}</td>
+            <td class="text-center">
+                <button class="expand-btn" onclick="togglePanel(event,${i})">
+                    📅 مێژووی پارەدان
+                </button>
+                <div class="text-xs text-gray-400 mt-1">${miniBar} ${paidPct}%</div>
+            </td>
         `;
+
+        // ── Detail panel row ──
+        const panelRow = document.createElement('tr');
+        panelRow.id = `panel-${i}`;
+
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.style.padding = '0';
+
+        const panel = document.createElement('div');
+        panel.className = 'detail-panel';
+        panel.id = `detail-${i}`;
+        panel.innerHTML = buildPaymentPanel(h);
+
+        td.appendChild(panel);
+        panelRow.appendChild(td);
+
         fragment.appendChild(tr);
+        fragment.appendChild(panelRow);
     });
 
     tbody.innerHTML = '';
@@ -370,25 +521,146 @@ function render() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+//  BUILD PAYMENT PANEL HTML
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPaymentPanel(h) {
+    if (!h.paymentData || h.paymentData.length === 0) {
+        return '<div style="padding:16px;color:#94a3b8;font-size:.8rem;">هیچ داتایەکی پارەدان نییە</div>';
+    }
+
+    const totalTracked = h.paid + h.unpaid;
+    const pct = totalTracked > 0 ? Math.round(h.paid / totalTracked * 100) : 0;
+
+    let html = `
+        <div style="padding:16px 20px;">
+            <div class="pay-summary">
+                <span><span class="dot" style="background:#16a34a"></span>پارەدراو: <strong>${h.paid}</strong></span>
+                <span><span class="dot" style="background:#ef4444"></span>نەدراو: <strong>${h.unpaid}</strong></span>
+                <span><span class="dot" style="background:#e2e8f0"></span>داتا نییە</span>
+                <span style="margin-right:auto">
+                    <strong>${pct}%</strong> پارەی دراوە
+                </span>
+            </div>
+    `;
+
+    // Render year blocks
+    h.paymentData.forEach(yr => {
+        html += `<div class="year-block">
+            <div class="year-label">${yr.year}</div>
+            <div class="month-grid">`;
+
+        yr.months.forEach((state, mi) => {
+            const label  = MONTHS_EN[mi];
+            const tip    = `${yr.year} / مانگی ${mi + 1}`;
+            const stateLabel = state === 'paid' ? 'پارەی دراوە ✓' : state === 'unpaid' ? 'پارەی نەدراوە ✗' : '—';
+            html += `<div class="month-cell ${state}" title="${tip}">
+                        ${label}
+                        <span class="tooltip">${tip}: ${stateLabel}</span>
+                     </div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
+    html += `</div>`;
+    return html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  TOGGLE PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+let openPanel = null;
+
+function togglePanel(evt, idx) {
+    evt.stopPropagation();
+    const panel = document.getElementById(`detail-${idx}`);
+    const btn   = evt.currentTarget;
+
+    if (openPanel !== null && openPanel !== idx) {
+        const prev = document.getElementById(`detail-${openPanel}`);
+        if (prev) prev.classList.remove('open');
+    }
+
+    const isOpen = panel.classList.toggle('open');
+    openPanel = isOpen ? idx : null;
+    btn.textContent = isOpen ? '✖ داخستن' : '📅 مێژووی پارەدان';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  POS CALCULATOR
+// ─────────────────────────────────────────────────────────────────────────────
+function openPOS() {
+    document.getElementById('posModal').classList.add('open');
+    document.getElementById('posMonthly').focus();
+}
+
+function closePOS() {
+    document.getElementById('posModal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePOS();
+});
+
+function calcPOS() {
+    const monthly = parseFloat(document.getElementById('posMonthly').value) || 0;
+    const months  = parseFloat(document.getElementById('posMonths').value)  || 0;
+    const cash    = parseFloat(document.getElementById('posCash').value)     || 0;
+
+    const total  = monthly * months;
+    const change = cash - total;
+
+    const totalEl  = document.getElementById('posTotal');
+    const changeEl = document.getElementById('changeAmount');
+    const noteEl   = document.getElementById('changeNote');
+    const display  = document.getElementById('changeDisplay');
+
+    // Format total
+    totalEl.textContent = total > 0 ? fmtIQD(total) + ' IQD' : '—';
+
+    // Format change
+    if (cash === 0 && total === 0) {
+        changeEl.textContent = '—';
+        noteEl.textContent   = '';
+        display.className    = 'change-display';
+        return;
+    }
+
+    changeEl.textContent = fmtIQD(Math.abs(change)) + ' IQD';
+
+    if (change > 0) {
+        noteEl.textContent   = 'گەڕاندنەوە بکە';
+        display.className    = 'change-display';              // blue — give change back
+    } else if (change === 0) {
+        noteEl.textContent   = '✓ تەواو — هیچ گەڕاندنەوەیەک نییە';
+        display.className    = 'change-display zero';         // green — exact
+    } else {
+        noteEl.textContent   = `کەمی ${fmtIQD(Math.abs(change))} IQD — پارە بەسەر نییە`;
+        display.className    = 'change-display negative';     // red — shortfall
+    }
+}
+
+function fmtIQD(n) {
+    return Math.round(n).toLocaleString('en-US');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 //  HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 function cleanStr(v) {
     if (v === null || v === undefined) return '';
-    return String(v).replace(/\s+/g, ' ').trim();
+    return String(v).replace(/\s+/g,' ').trim();
 }
 
 function esc(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function normalizeStatus(s) {
     if (!s) return 'unknown';
-    const lower = s.toLowerCase();
-    if (lower.includes('مولك') || lower.includes('مولک') || lower.includes('موللک')) return 'owner';
-    if (lower.includes('كریچی') || lower.includes('كريجى') || lower.includes('كريَجى') || lower.includes('كريچى')) return 'renter';
+    const l = s.toLowerCase();
+    if (l.includes('مولك') || l.includes('مولک') || l.includes('موللک')) return 'owner';
+    if (l.includes('كریچی') || l.includes('كريجى') || l.includes('كريَجى') || l.includes('كريچى')) return 'renter';
     return 'other';
 }
 
