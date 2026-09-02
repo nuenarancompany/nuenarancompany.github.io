@@ -1,1 +1,165 @@
 
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>کۆمپانیای نوینەران - سیستەمی بەڕێوەبردن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- This script allows the website to read Excel files directly -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans Arabic', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <nav class="bg-blue-900 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">کۆمپانیای نوینەران</h1>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-8 p-4">
+        
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 rounded" id="loadingMessage">
+            <p class="font-bold">تکایە چاوەڕێ بکە...</p>
+            <p>خەریکی خوێندنەوەی فایلی ئێکسڵەکەین. ئەمە چەند چرکەیەک دەخایەنێت.</p>
+        </div>
+
+        <div class="flex justify-between items-center bg-white p-4 rounded shadow mb-6 hidden" id="controls">
+            <div class="flex gap-4 w-1/2">
+                <input type="text" id="searchInput" placeholder="گەڕان بەدوای ناوی دانیشتوو یان ژمارەی خانوو..." class="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-blue-500" onkeyup="searchTable()">
+            </div>
+            <div>
+                <select id="complexFilter" class="border border-gray-300 p-2 rounded focus:outline-none" onchange="searchTable()">
+                    <option value="all">هەموو کۆمەڵگەکان</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-white rounded shadow overflow-hidden hidden" id="tableContainer">
+            <table class="w-full text-right" id="dataTable">
+                <thead class="bg-gray-200 text-gray-700">
+                    <tr>
+                        <th class="p-4 border-b">کۆمەڵگە</th>
+                        <th class="p-4 border-b">ژمارەی خانوو</th>
+                        <th class="p-4 border-b">ناوی دانیشتوو</th>
+                        <th class="p-4 border-b">خاوەن / کرێچی</th>
+                        <th class="p-4 border-b">مۆبایل</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- The 1600 houses will magically appear here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allHouses = [];
+
+        async function loadExcelData() {
+            try {
+                // Connects to the Excel file you uploaded to GitHub
+                const response = await fetch('جه دوه لي باره ي مانكانه 1.xlsx');
+                const arrayBuffer = await response.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                
+                // Loops through Marina, Qandil, Telar City, etc.
+                workbook.SheetNames.forEach(sheetName => {
+                    if (sheetName === 'خشته' || sheetName === 'Sheet1') return; 
+
+                    const sheet = workbook.Sheets[sheetName];
+                    const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    if (data.length < 2) return;
+
+                    let headers = data[0].map(h => String(h).trim());
+                    
+                    // Automatically finds the correct columns even if they move
+                    let nameIdx = headers.findIndex(h => h.includes('ناوی'));
+                    let numIdx = headers.findIndex(h => h.includes('خانوو') || h === 'ژ');
+                    let statusIdx = headers.findIndex(h => h.includes('خاوەن') && !h.includes('ناوی'));
+                    
+                    let phoneCols = [];
+                    for(let i=0; i<headers.length; i++) {
+                        if(headers[i].includes('مولک') || headers[i].includes('صاحب') || headers[i].includes('كريَجى') || headers[i].includes('كرێجى')) {
+                            phoneCols.push(i);
+                        }
+                    }
+                    
+                    if (phoneCols.length === 0) phoneCols = [7, 8, 9, 10]; // Fallback just in case
+                    if (nameIdx === -1) nameIdx = 3;
+                    if (numIdx === -1) numIdx = 1;
+                    if (statusIdx === -1) statusIdx = 5;
+
+                    const select = document.getElementById('complexFilter');
+                    const option = document.createElement('option');
+                    option.value = sheetName;
+                    option.text = sheetName;
+                    select.appendChild(option);
+
+                    for (let i = 1; i < data.length; i++) {
+                        let row = data[i];
+                        if (!row[numIdx] || String(row[numIdx]).trim() === '') continue; 
+
+                        let phones = phoneCols.map(idx => row[idx]).filter(p => p && p !== 0).join(' - ');
+
+                        allHouses.push({
+                            complex: sheetName,
+                            houseNum: row[numIdx] || 'نەزانراو',
+                            name: row[nameIdx] || 'نەزانراو',
+                            status: row[statusIdx] || '',
+                            phone: phones || 'نییە'
+                        });
+                    }
+                });
+
+                renderTable(allHouses);
+                document.getElementById('loadingMessage').classList.add('hidden');
+                document.getElementById('controls').classList.remove('hidden');
+                document.getElementById('tableContainer').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error reading file:", error);
+                document.getElementById('loadingMessage').innerHTML = "<p class='text-red-600 font-bold'>هەڵەیەک ڕوویدا لە خوێندنەوەی فایلەکە. دڵنیابە ناوی فایلەکە بە تەواوی 'جه دوه لي باره ي مانكانه 1.xlsx' یە لە ناو گیت‌هەب.</p>";
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            data.forEach(house => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50 border-b';
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-blue-800">${house.complex}</td>
+                    <td class="p-4 font-bold text-xl">${house.houseNum}</td>
+                    <td class="p-4 text-lg">${house.name}</td>
+                    <td class="p-4">${house.status}</td>
+                    <td class="p-4 text-lg font-bold" dir="ltr">${house.phone}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function searchTable() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const complex = document.getElementById('complexFilter').value;
+            
+            const filtered = allHouses.filter(house => {
+                const matchesSearch = String(house.name).toLowerCase().includes(query) || String(house.houseNum).toLowerCase().includes(query);
+                const matchesComplex = complex === 'all' || house.complex === complex;
+                return matchesSearch && matchesComplex;
+            });
+            
+            renderTable(filtered);
+        }
+
+        window.onload = loadExcelData;
+    </script>
+</body>
+</html>
