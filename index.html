@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
@@ -63,7 +62,7 @@
         async function loadExcelData() {
             try {
                 // Connects to the Excel file you uploaded to GitHub
-                const response = await fetch('جه دوه لي باره ي مانكانه 1.xlsx');
+                const response = await fetch('data.xlsx');
                 const arrayBuffer = await response.arrayBuffer();
                 const workbook = XLSX.read(arrayBuffer, { type: 'array' });
                 
@@ -124,7 +123,7 @@
 
             } catch (error) {
                 console.error("Error reading file:", error);
-                document.getElementById('loadingMessage').innerHTML = "<p class='text-red-600 font-bold'>هەڵەیەک ڕوویدا لە خوێندنەوەی فایلەکە. دڵنیابە ناوی فایلەکە بە تەواوی 'جه دوه لي باره ي مانكانه 1.xlsx' یە لە ناو گیت‌هەب.</p>";
+                document.getElementById('loadingMessage').innerHTML = "<p class='text-red-600 font-bold'>هەڵەیەک ڕوویدا لە خوێندنەوەی فایلەکە. دڵنیابە ناوی فایلەکە بە تەواوی 'data.xlsx' یە لە ناو گیت‌هەب.</p>";
             }
         }
 
