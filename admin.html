@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>ئەدمین - کۆمپانیای نوینەران</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
+    body { font-family:'Noto Sans Arabic','Segoe UI',sans-serif; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:9999px; font-size:.7rem; font-weight:600; }
+    .status-owner  { background:#dcfce7; color:#166534; }
+    .status-renter { background:#fee2e2; color:#991b1b; }
+    .complex-tag { display:inline-block; padding:2px 7px; border-radius:4px; font-size:.65rem; background:#dbeafe; color:#1e40af; }
+    #tableWrap { overflow-x:auto; }
+    table { border-collapse:collapse; width:100%; min-width:1600px; }
+    th { background:#0f172a; color:#fff; padding:9px 11px; font-weight:600; position:sticky; top:0; z-index:10; white-space:nowrap; font-size:.75rem; }
+    td { padding:7px 11px; border-bottom:1px solid #e5e7eb; vertical-align:middle; font-size:.8rem; }
+    tr.main-row:hover td { background:#fafafa; }
+    .stat-card { background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    .stat-num  { font-size:1.6rem; font-weight:700; }
+    .stat-lbl  { font-size:.72rem; color:#6b7280; margin-top:1px; }
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.6); backdrop-filter:blur(3px); z-index:50; align-items:center; justify-content:center; padding:16px; }
+    .modal-bg.open { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; width:min(720px,100%); max-height:92vh; overflow-y:auto; direction:rtl; box-shadow:0 24px 64px rgba(0,0,0,.3); }
+    .inp { width:100%; border:1.5px solid #cbd5e1; border-radius:8px; padding:9px 12px; font-size:.88rem; outline:none; transition:border-color .2s; box-sizing:border-box; }
+    .inp:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+    .lbl { font-size:.73rem; color:#475569; font-weight:600; margin-bottom:3px; display:block; }
+    .tab-btn { padding:6px 14px; border-radius:7px; font-size:.75rem; font-weight:600; transition:all .15s; cursor:pointer; border:none; }
+    .tab-btn.active { background:#fff; color:#0f172a; }
+    .tab-btn:not(.active) { background:transparent; color:#94a3b8; }
+    .tab-btn:not(.active):hover { background:rgba(255,255,255,.1); color:#e2e8f0; }
+    .complex-bar { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+    .complex-bar-fill { height:8px; border-radius:4px; background:#16a34a; }
+    .complex-bar-bg { flex:1; height:8px; border-radius:4px; background:#fee2e2; overflow:hidden; }
+    .delete-confirm { display:none; }
+    .delete-confirm.show { display:flex; }
+    .small-btn { font-size:12px; padding:6px 8px; border-radius:8px; }
+    .connection-status { transition:background-color .2s,color .2s; }
+    .executive-section { background:#fff; border:1px solid #e2e8f0; border-radius:14px; box-shadow:0 1px 4px rgba(15,23,42,.06); padding:18px; }
+    .executive-kpi { background:linear-gradient(145deg,#ffffff,#f8fafc); border:1px solid #e2e8f0; border-radius:12px; padding:15px; min-height:104px; }
+    .executive-kpi .value { font-size:1.35rem; line-height:1.25; font-weight:800; color:#0f172a; word-break:break-word; }
+    .executive-kpi .label { font-size:.72rem; font-weight:700; color:#64748b; margin-top:5px; }
+    .executive-kpi .hint { font-size:.67rem; color:#94a3b8; margin-top:3px; }
+    .risk-row { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid #f1f5f9; }
+    .risk-row:last-child { border-bottom:0; }
+    .analytics-table { width:100%; min-width:700px; border-collapse:collapse; }
+    .analytics-table th { position:static; background:#f8fafc; color:#475569; font-size:.69rem; padding:10px; }
+    .analytics-table td { padding:10px; font-size:.76rem; }
+    .trend-bars { display:flex; align-items:end; gap:10px; min-height:170px; direction:ltr; }
+    .trend-item { flex:1; min-width:42px; text-align:center; }
+    .trend-bar-wrap { height:125px; display:flex; align-items:end; justify-content:center; }
+    .trend-bar { width:min(30px,80%); min-height:4px; border-radius:7px 7px 2px 2px; background:linear-gradient(180deg,#6366f1,#4338ca); }
+    .trend-label { color:#64748b; font-size:.65rem; margin-top:5px; }
+    .trend-value { color:#334155; font-size:.63rem; margin-bottom:5px; direction:rtl; white-space:nowrap; }
+    .stat-action { transition:transform .15s, box-shadow .15s; }
+    .stat-action:hover { transform:translateY(-1px); box-shadow:0 4px 10px rgba(15,23,42,.08); }
+  
+/* Spacious payment surface; scoped so the rest of the site stays unchanged. */
+#paymentModal .modal-box { width:min(1120px,100%); max-width:1120px; max-height:94vh; max-height:94dvh; }
+#paymentModal { font-size:1rem; line-height:1.65; }
+#paymentModal .text-xs, #paymentModal .lbl, #paymentModal [class*="text-["] { font-size:.875rem; }
+#paymentModal .text-sm, #paymentModal .inp { font-size:1rem; }
+#paymentModal h3 { font-size:1.25rem; }
+#paymentModal .truncate { white-space:normal; overflow-wrap:anywhere; }
+#paymentModal button { min-height:44px; }
+#paymentModal button:focus-visible { outline:3px solid #2563eb; outline-offset:3px; }
+#paymentModal .payment-month-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; max-height:24rem; overflow-y:auto; padding:4px; }
+#paymentModal .payment-month-grid button { min-height:94px; padding:14px; border-radius:12px; border-width:2px; }
+#paymentModal .payment-month-grid button > span { display:block; }
+#paymentModal .payment-month-grid button > span:first-child { font-size:1.25rem; font-weight:800; }
+#paymentModal .history-note { white-space:pre-line; padding:12px 16px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; color:#475569; font-size:.875rem; line-height:1.8; max-height:9rem; overflow-y:auto; }
+#paymentModal .history-note[hidden] { display:none; }
+@media(max-width:480px) {
+  #paymentModal { padding:8px; }
+  #paymentModal .payment-month-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  #paymentModal .payment-month-grid button { padding:10px; overflow-wrap:anywhere; }
+}
+
+#paymentHouseInfo { padding:16px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; font-weight:700; overflow-wrap:anywhere; }
+#paymentMath { font-size:1.125rem; font-weight:700; overflow-wrap:anywhere; }
+
+/* Clear, colorful working surfaces without changing the site's navigation. */
+body { line-height:1.65; }
+#mainContent .text-xs, #mainContent .badge, #mainContent .complex-tag,
+#mainContent [class*="text-["], .modal-box .text-xs, .modal-box [class*="text-["] { font-size:.875rem; }
+#mainContent th, #mainContent td, .modal-box .text-sm { font-size:1rem; }
+#mainContent th { background:#e0e7ff; color:#312e81; padding:14px 12px; }
+#mainContent .main-row:nth-of-type(4n+1) { background:#f8fbff; }
+#mainContent button, .modal-box button { min-height:44px; }
+#mainContent .detail-row .max-h-36 { max-height:24rem; }
+#mainContent .detail-row [dir="ltr"] { padding:6px 10px; }
+.month-choice { background:#fff1f2; color:#9f1239; border:2px solid #fecdd3; font-weight:700; }
+.month-choice[data-state="advance"] { background:#eff6ff; color:#1d4ed8; border-color:#93c5fd; }
+.month-choice[data-state="selected"] { background:#047857; color:white; border-color:#047857; box-shadow:0 2px 4px #065f4620; }
+.advance-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:12px 0; }
+.advance-controls label { display:flex; align-items:center; gap:8px; font-weight:700; }
+.advance-controls input { width:20px; height:20px; accent-color:#2563eb; }
+.advance-controls select, .advance-controls button { min-height:44px; padding:8px 12px; border:1px solid #bfdbfe; border-radius:10px; background:#eff6ff; color:#1e40af; }
+.advance-controls select:disabled { opacity:.5; }
+.month-legend { display:flex; flex-wrap:wrap; gap:16px; font-size:.875rem; margin:4px 0 12px; }
+.history-note { white-space:pre-line; padding:12px 16px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; color:#475569; font-size:.875rem; line-height:1.8; max-height:9rem; overflow-y:auto; }
+.history-note[hidden] { display:none; }
+#infoModalRoot .modal-box { font-size:1rem; }
+
+/* Compact overview; long source notes are expanded on demand. */
+#adminHeader { background:linear-gradient(110deg,#1d4ed8,#1e3a8a); border:0; }
+#adminHeader>div { max-width:98%; }
+#adminDate { color:#dbeafe; }
+#mainContent { color:#1e293b; }
+#mainContent table { min-width:1180px; }
+#mainContent th,#mainContent td { font-size:.875rem; padding:12px 10px; }
+#mainContent th { background:#e0e7ff; color:#312e81; }
+#mainContent .main-row:nth-child(odd) { background:#f8fafc; }
+#mainContent .main-row:hover td { background:#eff6ff; }
+#mainContent .badge,#mainContent .complex-tag { font-size:.75rem; white-space:nowrap; }
+#mainContent .admin-actions { display:flex; gap:6px; align-items:center; flex-wrap:nowrap; }
+#mainContent .admin-actions button { min-height:36px; padding:6px 9px; font-size:.8rem; white-space:nowrap; }
+#mainContent .admin-actions-cell { min-width:270px; }
+#mainContent .contact-number { white-space:nowrap; font-variant-numeric:tabular-nums; }
+#mainContent .admin-detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; padding:12px; }
+#mainContent .admin-detail-grid dt { color:#64748b; font-size:.8rem; }
+#mainContent .admin-detail-grid dd { margin:4px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+#mainContent .admin-detail-notes { grid-column:1/-1; }
+.admin-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+.admin-stats>div { padding:16px; background:white; border:1px solid #e2e8f0; border-radius:12px; }
+.admin-stats strong { display:block; font-size:1.4rem; }
+.admin-stats span { color:#64748b; font-size:.8rem; }
+#paymentNotice { color:#047857; }
+#paymentNotice:empty { display:none; }
+@media(max-width:640px) { .admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+</style>
+</head>
+<body class="bg-slate-100 text-gray-800 min-h-screen">
+
+<!-- ADMIN LOGIN -->
+<div id="loginScreen" class="fixed inset-0 bg-slate-950 z-[100] flex items-center justify-center p-4">
+  <div class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+      <span class="text-white text-xl">🔐</span>
+    </div>
+    <h2 class="text-lg font-bold text-white mb-1">پانێلی ئەدمین</h2>
+    <p class="text-slate-400 text-xs mb-6">تکایە وشەی نهێنی ئەدمین بنووسە</p>
+    <input type="password" id="adminPassInput"
+      class="w-full bg-slate-800 border border-slate-600 text-white rounded-xl p-3 mb-3 text-center text-lg tracking-widest focus:border-indigo-500 focus:outline-none font-mono"
+      dir="ltr" placeholder="••••••••">
+    <p id="adminLoginError" class="text-red-400 text-xs font-bold mb-3 hidden">وشەی نهێنی هەڵەیە!</p>
+    <button onclick="checkAdminPass()"
+      class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition text-sm">
+      چوونە ژوورەوە
+    </button>
+    <a href="index.html" class="block mt-3 text-xs text-slate-500 hover:text-slate-300">← بگەڕێوە بۆ داشبۆرد</a>
+  </div>
+</div>
+
+<!-- ADMIN HEADER -->
+<header id="adminHeader" class="hidden sticky top-0 z-40 bg-slate-900 border-b border-slate-700 text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-3">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="bg-indigo-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg flex-shrink-0">ADMIN</span>
+        <div class="min-w-0">
+          <h1 class="text-sm font-bold leading-tight truncate">نوینەران · تۆمارکردنی پارەی خزمەتگوزاری</h1>
+          <p class="text-slate-400 text-xs" id="adminDate">—</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+
+        <a href="ceo.html" class="bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition whitespace-nowrap">🔐 پانێلی CEO</a>
+        <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">← داشبۆرد</a>
+        <button onclick="logoutAdmin()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg transition whitespace-nowrap">دەرچوون</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="connectionStatus" role="status" aria-live="polite" class="hidden connection-status max-w-[98%] mx-auto mt-3 px-4 py-2 rounded-lg text-xs font-semibold"></div>
+
+<!-- LOADING -->
+<div id="loadingBar" class="hidden max-w-[98%] mx-auto px-4 py-8">
+  <div class="bg-slate-800 border border-slate-600 rounded-xl p-5 flex items-center gap-4">
+    <svg class="animate-spin h-6 w-6 text-indigo-400 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+    <p class="font-semibold text-slate-300 text-sm">داتا بارکردنە...</p>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main id="mainContent" class="hidden max-w-[98%] mx-auto px-4 py-5">
+
+  <section id="paymentQueue" hidden class="text-sm mb-4" aria-live="polite"></section>
+  <div id="paymentNotice" role="status" class="text-sm text-green-200 mb-4"></div>
+  <div class="admin-stats">
+    <div><strong id="adminTotal">0</strong><span>کۆی خانووکان</span></div>
+    <div><strong id="adminComplexes" class="text-blue-600">0</strong><span>کۆمپلێکس</span></div>
+    <div><strong id="adminOwners" class="text-emerald-600">0</strong><span>خاوەن مولک</span></div>
+    <div><strong id="adminRenters" class="text-orange-600">0</strong><span>کرێچی</span></div>
+  </div>
+  <input type="search" id="adminSearch" class="inp mb-4 bg-white" placeholder="🔍 گەڕان — ژمارە، ناو یان تەلەفۆن" dir="rtl">
+  <!-- HOUSES TAB -->
+  <div id="tabHouses">
+    <div class="flex items-center gap-3 mb-3 flex-wrap">
+      <select id="adminComplexFilter" class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
+        <option value="">هەموو کۆمپلێکسەکان</option>
+      </select>
+      <select id="adminDebtFilter" class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
+        <option value="">هەموو</option>
+        <option value="3">٣ مانگ یان زیاتر قەرزدار</option>
+        <option value="6">٦ مانگ یان زیاتر قەرزدار</option>
+      </select>
+      <button onclick="toggleAdminSortHouseNum()" id="adminSortBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition">
+        🔢 ژمارە ▲▼
+      </button>
+      <button onclick="openHouseEditor()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition">➕ زیادکردنی خانوو</button>
+
+      <span class="text-xs text-slate-400 mr-auto"><span id="adminResultCount">0</span> خانوو</span>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+      <div id="tableWrap">
+        <table>
+          <thead><tr><th>#</th><th>کۆمپلێکس</th><th>خانوو</th><th>ناوی دانیشتوو</th><th>ناوی خاووەن خانوو</th><th>جۆر</th><th>تەلەفۆنی کرێچی</th><th>تەلەفۆنی خاوەن مولک</th><th>پارەی خزمەتگوزاری</th><th>پارەدان / کردار</th></tr></thead>
+          <tbody id="adminTableBody"></tbody>
+        </table>
+      </div>
+      <div id="adminEmpty" class="hidden py-12 text-center text-gray-400 text-sm">هیچ ئەنجامێک نەدۆزرایەوە</div>
+    </div>
+  </div>
+</main>
+
+<!-- HOUSE PROFILE EDITOR: adding/replacing a record never removes payment history. -->
+<div id="houseEditorModal" class="modal-bg" onclick="if(event.target===this)closeHouseEditor()">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="houseEditorTitle">
+    <div class="bg-emerald-700 text-white px-5 py-4 rounded-t-2xl flex justify-between items-center">
+      <h3 id="houseEditorTitle" class="font-bold text-base">➕ زیادکردن / گۆڕینی خانوو</h3>
+      <button type="button" onclick="closeHouseEditor()" class="text-emerald-100 hover:text-white text-xl font-bold">✕</button>
+    </div>
+    <form id="houseEditorForm" class="p-5 space-y-3" onsubmit="event.preventDefault(); saveHouseProfile()">
+      <p class="text-sm text-slate-600 bg-emerald-50 border border-emerald-200 rounded-lg p-3">ئەگەر کۆمپلێکس و ژمارەی خانوو هەبێت، زانیاریی کۆن نوێ دەکرێتەوە و هەموو مێژووی پارەدان دەپارێزرێت.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label><span class="lbl">کۆمپلێکس *</span><input id="houseEditComplex" class="inp" list="houseComplexOptions" required></label>
+        <label><span class="lbl">ژمارەی خانوو / ناونیشان *</span><input id="houseEditNumber" class="inp" required></label>
+        <label><span class="lbl">ناوی دانیشتوو / خێزان</span><input id="houseEditResident" class="inp"></label>
+        <label><span class="lbl">ناوی خاووەن خانوو</span><input id="houseEditOwnerName" class="inp"></label>
+        <label><span class="lbl">جۆری سکون</span><select id="houseEditStatus" class="inp"><option value="">نەزانراو</option><option value="خاوەن مولک">خاوەن مولک</option><option value="کرێچی">کرێچی</option></select></label>
+        <label><span class="lbl">پیشە</span><input id="houseEditProfession" class="inp"></label>
+        <label><span class="lbl">تەلەفۆنی کرێچی (كرێجى)</span><input id="houseEditRenterPhone" class="inp" inputmode="tel" dir="ltr"></label>
+        <label><span class="lbl">تەلەفۆنی خاوەن مولک</span><input id="houseEditOwnerPhone" class="inp" inputmode="tel" dir="ltr"></label>
+        <label><span class="lbl">مۆبایل / ژمارەی گشتی</span><input id="houseEditMobile" class="inp" inputmode="tel" dir="ltr"></label>
+        <label><span class="lbl">نەتەوە</span><input id="houseEditNationality" class="inp"></label>
+        <label><span class="lbl">بلۆک</span><input id="houseEditBlock" class="inp"></label>
+        <label><span class="lbl">نرخی مانگانە (ئەگەر هەیە)</span><input id="houseEditMonthlyRent" class="inp" type="number" min="0" step="1" inputmode="numeric"></label>
+      </div>
+      <label><span class="lbl">زانیاری زیادە</span><textarea id="houseEditExtra" class="inp" rows="2"></textarea></label>
+      <datalist id="houseComplexOptions"></datalist>
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="closeHouseEditor()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl">پاشگەزبوونەوە</button>
+        <button type="submit" id="houseEditorSaveBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl">پاشەکەوتکردن</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL (monthly service payment only) -->
+<div id="paymentModal" class="modal-bg" onclick="if(event.target===this)closePaymentModal()">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
+    <div class="bg-slate-800 text-white px-5 py-4 rounded-t-2xl flex justify-between items-center">
+      <h3 class="font-bold text-sm" id="paymentModalTitle">💸 وەرگرتنی پارە</h3>
+      <button onclick="closePaymentModal()" class="text-slate-300 hover:text-white text-xl font-bold">✕</button>
+    </div>
+    <div class="p-5 space-y-3">
+      <input type="hidden" id="paymentHouseId">
+      <div>
+        <label class="lbl">ژمارەی خانوو / ناو</label>
+        <div id="paymentHouseInfo" class="text-sm text-slate-600"></div>
+      </div>
+
+      <p class="text-sm text-slate-600">هەمان مانگەکانی وەسلەکە هەڵبژێرە.</p>
+      <div class="advance-controls">
+        <label><input id="paymentAdvance" type="checkbox" onchange="refreshPaymentMonths()"> پارەدانی پێشوەختە</label>
+        <label>ساڵ <select id="paymentYear" aria-label="ساڵی پارەدان" onchange="refreshPaymentMonths()" disabled></select></label>
+        <button type="button" onclick="selectPaymentYear()">هەموو مانگەکانی ئەم ساڵە</button>
+      </div>
+      <p class="month-legend"><span>🔴 قەرز</span><span>🔵 پێشوەختە — قەرز نییە</span><span>🟢 هەڵبژێردراو</span></p>
+      <div id="paymentMonthOptions" class="payment-month-grid"></div>
+      <aside id="paymentHistoryNote" class="history-note" hidden></aside>
+
+      <div>
+        <label class="lbl">کۆی پارە (نرخی یەک مانگ * ژمارەی مانگ)</label>
+        <div id="paymentMath" class="p-3 bg-slate-50 rounded-lg text-sm text-slate-700">کۆی پارە لێرە نیشان دەدرێت</div>
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button onclick="closePaymentModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl text-sm">پاشگەزبوونەوە</button>
+        <button onclick="recordPayment()" id="paymentRecordBtn" class="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2.5 rounded-xl text-sm">تۆمارکردن</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="login-load-guard">
+(() => {
+  const input = document.getElementById('adminPassInput');
+  const error = document.getElementById('adminLoginError');
+  const button = input.parentElement.querySelector('button[onclick="checkAdminPass()"]');
+  if (!button) return;
+  const label = button.textContent;
+  const originalError = error.textContent;
+  button.disabled = true;
+  button.textContent = 'چاوەڕێ بکە…';
+  let ready = false;
+  let retry;
+  function failed() {
+    if (ready) return;
+    error.textContent = 'پەڕە تەواو بارنەبوو. ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە.';
+    error.classList.remove('hidden');
+    if (!retry) {
+      retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = 'هەوڵدانەوە';
+      retry.className = 'block w-full rounded-lg bg-slate-200 text-slate-900 p-3 mt-3';
+      retry.addEventListener('click', () => location.reload());
+      button.after(retry);
+    }
+  }
+  const timer = setTimeout(failed, 12000);
+  window.nuenaranLoginReady = () => {
+    ready = true;
+    clearTimeout(timer);
+    button.disabled = false;
+    button.textContent = label;
+    error.textContent = originalError;
+    error.classList.add('hidden');
+    retry?.remove();
+    if (document.getElementById('loginScreen').classList.contains('hidden')) return;
+    input.focus();
+  };
+  window.addEventListener('error', event => {
+    if (event.target?.id === 'pageApp') failed();
+  }, true);
+})();
+</script>
+<script type="module" id="pageApp">
+// Embedded business.js: this page also works without separate local module files.
+const __local_business_js = (() => {
+// Shared accounting rules. Skips are explicit records, never inferred after a new payment.
+function normalizeText(value) {
+  return String(value ?? '').normalize('NFKC').replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/ك/g,'ک').replace(/[ىي]/g,'ی')
+    .replace(/[\u200c\u200d\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,'').trim();
+}
+const searchText = value => normalizeText(value).replace(/\s+/g,'').toLowerCase();
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function monthNumber(value) {
+  const text = normalizeText(value);
+  return /^\d{1,2}$/.test(text) && +text >= 1 && +text <= 12 ? +text : null;
+}
+function parseMonthKey(value) {
+  const match = normalizeText(value).match(/^(\d{4})[-/](\d{1,2})$/);
+  if (!match || !monthNumber(match[2]) || +match[1] < 1900 || +match[1] > 2200) return null;
+  const year = +match[1], month = +match[2];
+  return { key: `${year}-${String(month).padStart(2,'0')}`, year, month };
+}
+function monthEntries(map) {
+  const result = new Map();
+  const add = value => { const entry = parseMonthKey(value); if(entry) result.set(entry.key, entry); };
+  if (Array.isArray(map)) map.forEach(value => add(value?.key ?? value));
+  else if (map && typeof map === 'object') Object.entries(map).forEach(([key,value]) => {
+    if (parseMonthKey(key)) { add(key); return; }
+    const year = normalizeText(key);
+    if (!/^\d{4}$/.test(year)) return;
+    const months = Array.isArray(value) ? value : value && typeof value === 'object' ? Object.keys(value) : [value];
+    months.forEach(month => { if (monthNumber(month)) add(`${year}-${monthNumber(month)}`); });
+  });
+  return [...result.values()].sort((a,b)=>a.key.localeCompare(b.key));
+}
+function monthMap(entries) {
+  const map = {};
+  monthEntries(entries).forEach(({year,month}) => (map[year] ??= []).push(String(month)));
+  return map;
+}
+const billingDateFormatter = new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'});
+let dateSecond = null, dateValue = '';
+function baghdadDate(now = new Date()) {
+  const second = Math.floor(now.getTime() / 1000);
+  if (second === dateSecond) return dateValue;
+  const parts = billingDateFormatter.formatToParts(now);
+  const get = type => parts.find(p=>p.type===type).value;
+  dateSecond = second;
+  return dateValue = `${get('year')}-${get('month')}-${get('day')}`;
+}
+// Firestore snapshots replace these maps. Reuse derived dates until a map changes.
+const monthStateCache = new WeakMap();
+function monthState(house) {
+  if (!house || typeof house !== 'object') return {skipped:[],paid:[],unpaid:[]};
+  const previous = monthStateCache.get(house);
+  if (previous && previous.paidSource === house.paidMonths && previous.unpaidSource === house.unpaidMonths && previous.skippedSource === house.skippedMonths) return previous;
+  const skipped = monthEntries(house.skippedMonths);
+  const excluded = new Set(skipped.map(e=>e.key));
+  const paid = monthEntries(house.paidMonths).filter(e=>!excluded.has(e.key));
+  paid.forEach(e=>excluded.add(e.key));
+  const unpaid = monthEntries(house.unpaidMonths).filter(e=>!excluded.has(e.key));
+  const result = {skipped,paid,unpaid,paidSource:house.paidMonths,unpaidSource:house.unpaidMonths,skippedSource:house.skippedMonths};
+  monthStateCache.set(house,result);
+  return result;
+}
+function skippedEntries(house) { return monthState(house).skipped; }
+function paidEntries(house) { return monthState(house).paid; }
+function unpaidEntries(house) { return monthState(house).unpaid; }
+function dueEntries(house, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7), state = monthState(house);
+  if (state.duePeriod !== current) {
+    state.duePeriod = current;
+    state.due = state.unpaid.filter(e=>e.key < current);
+  }
+  return state.due;
+}
+function settledEntries(house, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7);
+  return paidEntries(house).filter(e=>e.key < current);
+}
+function paymentOptions(house, advanceYear = null, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7);
+  const result = dueEntries(house,now).map(e=>({...e,advance:false}));
+  const year = Number(advanceYear);
+  if (!Number.isInteger(year) || year < Number(current.slice(0,4)) || year > 2200) return result;
+  const excluded = new Set([...paidEntries(house),...skippedEntries(house)].map(e=>e.key));
+  for (let month=1; month<=12; month++) {
+    const entry = parseMonthKey(year+'-'+month);
+    if (entry.key >= current && !excluded.has(entry.key)) result.push({...entry,advance:true});
+  }
+  return result.sort((a,b)=>a.key.localeCompare(b.key));
+}
+function monthDataWarning(house) {
+  const hasMissingDates = Number(house?.totalUnpaid) > 0 && !monthEntries(house?.unpaidMonths).length;
+  const rawPaidCount = Object.values(house?.paidMonths || {}).reduce((sum,v)=>sum+(Array.isArray(v)?v.length:0),0);
+  const duplicatePaid = rawPaidCount > monthEntries(house?.paidMonths).length;
+  const paid = new Set(monthEntries(house?.paidMonths).map(e=>e.key));
+  const overlap = monthEntries(house?.unpaidMonths).some(e=>paid.has(e.key));
+  return Boolean(house?.billingReview || hasMissingDates || duplicatePaid || overlap);
+}
+function parseIQD(value) {
+  const text = normalizeText(value).replace(/٬/g,',');
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(text)) return null;
+  const amount = Number(text.replace(/,/g,''));
+  return Number.isSafeInteger(amount) && amount >= 0 && amount <= 1000000000 ? amount : null;
+}
+function statusKind(value) {
+  const text = searchText(value).replace(/ۆ/g,'و');
+  if (/^(کر[ێی][چج]ی?|کر[چج]ی|کرچی|کرێنشین|renter|tenant)$/.test(text)) return 'renter';
+  if (/^(مول+ک|ملک|مالک|خاوەن|خاوەنمولک|خاوەنخانوو|مومک|owner)$/.test(text)) return 'owner';
+  return 'other';
+}
+function recordInfo(house = {}) {
+  const source = house.raw && typeof house.raw === 'object' ? house.raw : house;
+  const value = (...keys) => { for (const key of keys) { const raw = source[key]; if (raw !== null && raw !== undefined && String(raw).trim()) return String(raw).trim(); } return ''; };
+  const extra = [['بلۆک',value('block','blockCode','blockName')],['جۆری یەکە',value('homeType','unitType')],['دەراب',value('darab','derab','darb','دەراب')],['زانیاریی زیادە',value('sourceExtra','sourceColumn1','Column1')],['تێبینی',Array.isArray(source.notes)?source.notes.join('؛ '):value('notes','note')]].filter(([,text])=>text);
+  return {residentName:value('residentName','tenantName','renterName','name','ناوی سیانی'),renterPhone:value('renterPhone','tenantPhone','كرێجى','کرێچی','کرێجی','كرجي','كرجى'),profession:value('profession','occupation','job','پیشە','پیشه'),ownerName:value('ownerName','landlordName','ناوی خاووەن خانوو','ناوی خاوەن خانوو'),ownerPhone:value('ownerPhone','landlordPhone','خاوەن مولک','خاوەن موڵک','خاون مولک','صاحب','صاحبی'),mobile:value('mobile','phone','مۆبایل','موبایل','موبيل'),nationality:value('nationality','nat','ethnicity','نەتەوە','نه ته وه'),extra:extra.map(([label,text])=>label+': '+text).join('\n')};
+}
+function compareHouses(a,b) {
+  return normalizeText(a.complex ?? a.complexName).localeCompare(normalizeText(b.complex ?? b.complexName),'en',{numeric:true,sensitivity:'base'})
+    || normalizeText(a.houseNum ?? a.houseNumber).localeCompare(normalizeText(b.houseNum ?? b.houseNumber),'en',{numeric:true,sensitivity:'base'})
+    || normalizeText(a.block).localeCompare(normalizeText(b.block),'en',{numeric:true}) || String(a.id??'').localeCompare(String(b.id??''));
+}
+function planPayment(house, selectedKeys, now = new Date(), {allowAdvance = false} = {}) {
+  const keys = [...new Set(selectedKeys)];
+  const due = new Set(dueEntries(house,now).map(e=>e.key));
+  const current = baghdadDate(now).slice(0,7);
+  const excluded = new Set([...paidEntries(house),...skippedEntries(house)].map(e=>e.key));
+  const eligible = key => due.has(key) || (allowAdvance && parseMonthKey(key)?.key === key && key >= current && !excluded.has(key));
+  if (!keys.length || keys.length !== selectedKeys.length || keys.some(k=>!eligible(k))) throw new Error('مانگەکان گۆڕاون، دراون یان تێپەڕێنراون. داتاکان نوێ بکەرەوە.');
+  const paid = [...paidEntries(house),...keys.map(parseMonthKey)];
+  const unpaid = unpaidEntries(house).filter(e=>!keys.includes(e.key));
+  return {paidMonths:monthMap(paid),unpaidMonths:monthMap(unpaid),totalPaid:paid.length,totalUnpaid:unpaid.length};
+}
+
+return { normalizeText, searchText, escapeHTML, monthNumber, parseMonthKey, monthEntries, monthMap, baghdadDate, skippedEntries, paidEntries, unpaidEntries, dueEntries, settledEntries, paymentOptions, monthDataWarning, parseIQD, statusKind, recordInfo, compareHouses, planPayment };
+})();
+
+// Embedded service-fees.js: this page also works without separate local module files.
+const __local_service_fees_js = (() => {
+const serviceDigitMap = { '٠':'0', '١':'1', '٢':'2', '٣':'3', '٤':'4', '٥':'5', '٦':'6', '٧':'7', '٨':'8', '٩':'9', '۰':'0', '۱':'1', '۲':'2', '۳':'3', '۴':'4', '۵':'5', '۶':'6', '۷':'7', '۸':'8', '۹':'9' };
+function normalizeServiceText(value){
+  return String(value ?? '')
+    .replace(/[٠-٩۰-۹]/g, digit => serviceDigitMap[digit] || digit)
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[ةۀ]/g, 'ە')
+    .replace(/ۆ/g, 'و')
+    .replace(/[\u200c\u200f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+function compactServiceText(value){
+  return normalizeServiceText(value).replace(/[()[\]{}]/g, '').replace(/[\s._\-–—]/g, '');
+}
+function isShopComplex(value){
+  return /دو+کان/.test(compactServiceText(value));
+}
+const qandilApartmentRates = {
+  A: { amount: 30000, metre: '125m²' },
+  B: { amount: 37000, metre: '150m²' },
+  D1: { amount: 20000, metre: '80m²' },
+  D2: { amount: 20000, metre: '80m²' },
+  C: { amount: 45000, metre: '200m²' },
+  CDP: { amount: 35000, metre: '100 Dublex' }
+};
+function qandilApartmentInfo(house = {}){
+  const candidates = [
+    house.qandilType, house.apartmentType, house.houseType, house.unitType,
+    house.houseNum, house.houseNumber, house.houseNumStr, house['house num']
+  ];
+  for (const candidate of candidates) {
+    const value = normalizeServiceText(candidate).toUpperCase().replace(/[\s()\-–—]/g, '');
+    const type = value.startsWith('CDP') ? 'CDP'
+      : value.startsWith('D1') ? 'D1'
+      : value.startsWith('D2') ? 'D2'
+      : value.startsWith('A') ? 'A'
+      : value.startsWith('B') ? 'B'
+      : value.startsWith('C') ? 'C'
+      : '';
+    if (type && qandilApartmentRates[type]) return { type, ...qandilApartmentRates[type] };
+  }
+  return null;
+}
+function missingServiceFeeLabel(fee){
+  if (fee.needsDarab) return 'دەراب پێویستە';
+  if (fee.needsApartmentType) return 'جۆری شوقە پێویستە بۆ قندیل';
+  return 'نرخ دیاری نەکراوە';
+}
+function serviceFeeForHouse(house = {}){
+  const complex = compactServiceText(house.complex ?? house.complexName);
+  const houseNumber = normalizeServiceText(house.houseNum ?? house.houseNumber ?? house.houseNumStr ?? house['house num']);
+  const darabValue = house.darab ?? house.derab ?? house.darb ?? house['دەراب'] ?? '';
+  const darab = Number(normalizeServiceText(darabValue));
+  const manualNumber = Number(house.monthlyRent ?? house.rentPerMonth);
+  const manualAmount = Number.isSafeInteger(manualNumber) && manualNumber > 0 && manualNumber <= 1000000000 ? manualNumber : 0;
+
+  if (['تەلارسیتی', 'تەلارستی'].includes(complex)) return { amount: 40000, automatic: true, rule: 'تەلار سیتی — 40,000 IQD' };
+  if (complex === 'مارینا1') return { amount: 55000, automatic: true, rule: 'مارینا (١) — 55,000 IQD' };
+  if (complex === 'مارینا2') return { amount: 53000, automatic: true, rule: 'مارینا (٢) — 53,000 IQD' };
+  if (complex === 'مارینا3') return { amount: 55000, automatic: true, rule: 'مارینا (٣) — 55,000 IQD' };
+  if (complex === 'مارینا4') {
+    const hasAB = /^(?:\d+\s*[ab]|[ab]\s*\d+)$/i.test(houseNumber);
+    return {
+      amount: hasAB ? 40000 : 55000,
+      automatic: true,
+      rule: hasAB ? 'مارینا (٤) — A/B: 40,000 IQD' : 'مارینا (٤) — بێ A/B: 55,000 IQD'
+    };
+  }
+  if (['شوقەکانتەلارسیتی', 'شوقەکانتەلارستی', 'شوقەکانیتەلارسیتی'].includes(complex)) return { amount: 25000, automatic: true, rule: 'شوقەکان تەلار سیتی — 25,000 IQD' };
+  if (complex === 'قندیل') {
+    const qandil = qandilApartmentInfo(house);
+    if (qandil) return {
+      amount: qandil.amount,
+      automatic: true,
+      qandil,
+      rule: `قندیل — ${qandil.type} · ${qandil.metre}: ${qandil.amount.toLocaleString('en-US')} IQD`
+    };
+    return {
+      amount: manualAmount,
+      automatic: false,
+      needsApartmentType: !manualAmount,
+      rule: manualAmount ? 'قندیل — نرخی تۆمارکراو' : 'قندیل — جۆری شوقە پێویستە بۆ قندیل'
+    };
+  }
+  if (isShopComplex(complex)) {
+    const shopRates = { 1: 15000, 2: 20000, 3: 25000, 4: 30000 };
+    if (shopRates[darab]) return { amount: shopRates[darab], automatic: true, rule: `دووكان — دەراب ${darab}: ${shopRates[darab].toLocaleString('en-US')} IQD` };
+    return { amount: 0, automatic: false, needsDarab: true, rule: 'دووكان — دەراب پێویستە' };
+  }
+  if (['دوبایسیتی', 'دوبەیستی', 'دوبەیسیتی'].includes(complex)) return { amount: 150000, automatic: true, rule: 'دوبەی ستی — 150,000 IQD' };
+  if (complex === 'پێشانگا') return { amount: 100000, automatic: true, rule: 'پێشانگا — 100,000 IQD' };
+  return { amount: manualAmount, automatic: false, rule: manualAmount ? 'نرخی دەستی (دەستکاریکراو) / تۆمارکراو' : 'نرخ دیاری نەکراوە' };
+}
+
+
+return { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmentInfo, missingServiceFeeLabel, serviceFeeForHouse };
+})();
+
+// Embedded payment-queue.js: this page also works without separate local module files.
+const __local_payment_queue_js = (() => {
+// Durable, idempotent outbox. A pending request is NOT a confirmed payment.
+function createPaymentQueue(commit, changed) {
+  let running = false;
+  const ready = new Promise((resolve,reject)=>{
+    const req=indexedDB.open('nuenaran-payment-outbox',1);
+    req.onupgradeneeded=()=>req.result.createObjectStore('requests',{keyPath:'id'});
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+  ready.catch(()=>{}); // Surface unavailable storage when a queue operation is attempted.
+  async function access(mode,fn) {
+    const db=await ready;
+    return new Promise((resolve,reject)=>{
+      const tx=db.transaction('requests',mode);const req=fn(tx.objectStore('requests'));
+      tx.oncomplete=()=>resolve(req.result);tx.onabort=()=>reject(tx.error);tx.onerror=()=>reject(tx.error);
+    });
+  }
+  const list=()=>access('readonly',store=>store.getAll());
+  const put=item=>access('readwrite',store=>store.put(item));
+  const remove=id=>access('readwrite',store=>store.delete(id));
+  async function notify(){await changed(await list());}
+  async function flush(){
+    if(running||!navigator.onLine)return;
+    running=true;
+    try {
+      for(const item of await list()) {
+        if(item.state==='failed')continue;
+        try { await commit(item); await remove(item.id); }
+        catch(error) {
+          if(!navigator.onLine || /unavailable|deadline-exceeded|aborted|network/.test(error.code||'')) break;
+          await put({...item,state:'failed',error:String(error.message||error)});
+        }
+        await notify();
+      }
+    } finally { running=false; await notify(); }
+  }
+  return {
+    list, flush,
+    async enqueue(item){
+      // Enforce the same-house guard in one IndexedDB transaction, including across tabs.
+      const db=await ready;
+      await new Promise((resolve,reject)=>{
+        const tx=db.transaction('requests','readwrite'),store=tx.objectStore('requests');
+        const req=store.getAll();let conflict=false;
+        req.onsuccess=()=>{if(req.result.some(r=>r.houseId===item.houseId)){conflict=true;tx.abort();}else store.add(item);};
+        tx.oncomplete=resolve;tx.onabort=()=>reject(new Error(conflict?'ئەم خانووە پارەدانێکی چاوەڕوانکراوی هەیە.':String(tx.error)));tx.onerror=()=>reject(tx.error);
+      });
+      await notify(); void flush();
+    },
+    async retry(id){const item=(await list()).find(r=>r.id===id);if(item){await put({...item,state:'pending',error:''});await notify();void flush();}},
+    async cancel(id){const item=(await list()).find(r=>r.id===id);if(item?.state==='failed'){await remove(id);await notify();}}
+  };
+}
+
+
+return { createPaymentQueue };
+})();
+
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
+import {getFirestore,collection,doc,onSnapshot,runTransaction,enableMultiTabIndexedDbPersistence} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+const { escapeHTML: esc, dueEntries, paidEntries, skippedEntries, planPayment, paymentOptions, compareHouses, searchText, statusKind, recordInfo, baghdadDate, monthDataWarning } = __local_business_js;
+const { serviceFeeForHouse } = __local_service_fees_js;
+const { createPaymentQueue } = __local_payment_queue_js;
+const app=initializeApp({apiKey:'AIzaSyBe2dBVhBMFR7ZAR3Z26ZG0q8e2KQTHlII',authDomain:'nuenaran.firebaseapp.com',projectId:'nuenaran',appId:'1:271798697223:web:8dade3ac017ce1a9c399a2'});
+const db=getFirestore(app), $=id=>document.getElementById(id);
+const persistence=enableMultiTabIndexedDbPersistence(db).catch(()=>{});
+const fmt=n=>Number(n).toLocaleString('en-US')+' IQD';
+let houses=[],pending=[],selected=new Set(),activeId=null,unsubscribe=null,started=false,sort=1,saving=false,metadata={fromCache:true};
+const label=h=>String(h.houseNum??h.houseNumber??'—')+(h.block?' · بلۆک '+h.block:'');
+const resident=h=>h.residentName||h.tenantName||h.renterName||h.ownerName||h.name||'—';
+function normalize(id,data){return {...data,id,houseNum:String(data.houseNum??data.houseNumber??''),complex:String(data.complex??''),payments:Array.isArray(data.payments)?data.payments:[]};}
+function session(value){try{if(value===undefined)return sessionStorage.getItem('nuenaran-admin-session')==='1';if(value)sessionStorage.setItem('nuenaran-admin-session','1');else sessionStorage.removeItem('nuenaran-admin-session');}catch{}return false;}
+let queueViewKey='';
+const queue=createPaymentQueue(async request=>{
+  if(!started)throw Object.assign(new Error('چوونەژوورەوە پێویستە.'),{code:'unavailable'});
+  await runTransaction(db,async tx=>{
+    const ref=doc(db,'houses',request.houseId),snapshot=await tx.get(ref);
+    if(!snapshot.exists())throw Error('خانوو نەدۆزرایەوە.');
+    const house=normalize(snapshot.id,snapshot.data());
+    if(house.payments.some(p=>p.id===request.id))return; // Safe retry after an uncertain response.
+    const fee=serviceFeeForHouse(house).amount;
+    if(!fee||fee!==request.rate)throw Error('نرخ گۆڕاوە؛ پارەدانەکە بپشکنە.');
+    const update=planPayment(house,request.months,new Date(),{allowAdvance:true});
+    const receipt={id:request.id,type:'payment',monthsRecorded:request.months.length,months:request.months,amount:fee*request.months.length,note:'وەسل',recordedBy:'admin',createdAt:new Date().toISOString(),requestedAt:request.createdAt};
+    tx.update(ref,{...update,payments:[...house.payments,receipt]});
+  });
+  $('paymentNotice').textContent='✓ پارەدان پەسەندکرا: '+request.houseLabel+' · '+request.months.join('، ');
+},async rows=>{pending=rows;const key=JSON.stringify(rows);if(key!==queueViewKey){queueViewKey=key;renderQueue();render();if(activeId)renderPayment();}});
+function renderQueue(){
+  const root=$('paymentQueue');root.hidden=!pending.length;
+  root.innerHTML=pending.map(item=>`<div class="rounded-lg border border-amber-200 bg-amber-50 p-3 mb-2"><strong>${esc(item.houseLabel)}</strong> · ${esc(item.months.join('، '))}<p>${item.state==='failed'?'پێویستی بە پشکنینە: '+esc(item.error):'چاوەڕێی پەسەندکردنی Firebase ـە؛ هێشتا پارەدان تۆمار نەکراوە.'}</p>${item.state==='failed'?`<button class="underline m-2" data-retry="${esc(item.id)}">هەوڵدانەوە</button><button class="underline m-2" data-cancel="${esc(item.id)}">لابردنی داواکاری</button>`:''}</div>`).join('');
+  root.querySelectorAll('[data-retry]').forEach(b=>b.onclick=()=>queue.retry(b.dataset.retry));
+  root.querySelectorAll('[data-cancel]').forEach(b=>b.onclick=()=>{if(confirm('داواکارییە شکست‌هاتووەکە لاببرێت؟'))queue.cancel(b.dataset.cancel);});
+  connection();
+}
+function connection(){
+  if(!started)return;
+  $('connectionStatus').className='connection-status mx-auto m-3 p-3 rounded-lg text-sm '+(!navigator.onLine||pending.length?'bg-amber-50 text-amber-900':'bg-blue-50 text-blue-800');
+  $('connectionStatus').textContent=!navigator.onLine?'ئۆفلاین — داتاکانی پاشەکەوتکراو':pending.length?`${pending.length} پارەدان چاوەڕێی سینککردنن / پشکنینن`:metadata.fromCache?'داتاکانی پاشەکەوتکراو — چاوەڕێی نوێکردنەوە':'ئۆنلاین — داتاکان نوێن';
+}
+function render(){
+  if(!started)return;
+  const q=searchText($('adminSearch').value),complex=$('adminComplexFilter').value,min=Number($('adminDebtFilter').value)||0;
+  const list=houses.filter(h=>(!complex||h.complex===complex)&&dueEntries(h).length>=min&&(!q||[resident(h),h.houseNum,h.block,...Object.values(recordInfo(h))].some(v=>searchText(v).includes(q)))).sort((a,b)=>sort*compareHouses(a,b));
+  $('adminResultCount').textContent=list.length;$('adminEmpty').classList.toggle('hidden',!!list.length);
+  $('adminTotal').textContent=houses.length.toLocaleString();
+  $('adminComplexes').textContent=new Set(houses.map(h=>h.complex)).size.toLocaleString();
+  $('adminOwners').textContent=houses.filter(h=>statusKind(h.occupancyType||h.status)==='owner').length.toLocaleString();
+  $('adminRenters').textContent=houses.filter(h=>statusKind(h.occupancyType||h.status)==='renter').length.toLocaleString();
+  $('adminTableBody').innerHTML=list.map((h,i)=>{
+    const rate=serviceFeeForHouse(h),due=dueEntries(h).length,busy=pending.some(p=>p.houseId===h.id);
+    const kind=statusKind(h.occupancyType||h.status),info=recordInfo(h);
+    return `<tr class="main-row"><td>${i+1}</td><td><span class="complex-tag">${esc(h.complex)}</span></td><td dir="ltr">${esc(label(h))}</td><td>${esc(resident(h))}</td><td>${esc(info.ownerName||'—')}</td><td><span class="badge status-${kind}">${kind==='renter'?'کرێچی':kind==='owner'?'خاوەن مولک':'—'}</span></td><td class="contact-number" dir="ltr">${esc(info.renterPhone||'—')}</td><td class="contact-number" dir="ltr">${esc(info.ownerPhone||'—')}</td><td class="contact-number">${rate.amount?fmt(rate.amount):esc(rate.rule)}</td><td class="admin-actions-cell"><div class="admin-actions"><span><span class="text-green-700">✓ ${paidEntries(h).length}</span><br><span class="text-red-700">× ${due}</span></span><button data-pay="${esc(h.id)}" class="rounded-lg bg-emerald-600 text-white disabled:opacity-50" ${busy?'disabled':''}>${busy?'چاوەڕێ':'پارەدان'}</button><button data-edit="${esc(h.id)}" class="rounded-lg bg-amber-500 text-white">گۆڕین</button><button data-details="${esc(h.id)}" aria-expanded="false" class="rounded-lg border border-blue-200 bg-blue-50 text-blue-700">وردەکاری ▾</button></div>${monthDataWarning(h)?'<span class="text-amber-800">بەروارەکان بپشکنە</span>':''}</td></tr>`;
+  }).join('');
+  $('adminTableBody').querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>window.openPaymentModal(b.dataset.pay));
+  $('adminTableBody').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>window.openHouseEditor(b.dataset.edit));
+}
+$('adminTableBody').addEventListener('click',event=>{
+  const button=event.target.closest('[data-details]'); if(!button)return;
+  const row=button.closest('tr');
+  if(row.nextElementSibling?.classList.contains('admin-details')) { row.nextElementSibling.remove(); button.setAttribute('aria-expanded','false'); return; }
+  const house=houses.find(h=>h.id===button.dataset.details); if(!house)return;
+  const info=recordInfo(house),detail=document.createElement('tr'); detail.className='admin-details';
+  detail.innerHTML='<td colspan="10"><dl class="admin-detail-grid">'+[
+    ['مۆبایل',info.mobile],['پیشە',info.profession],['نەتەوە',info.nationality],['ناوی خاووەن خانوو',info.ownerName],
+    ['تەلەفۆنی کرێچی',info.renterPhone],['تەلەفۆنی خاوەن مولک',info.ownerPhone],['زانیاریی زیادە',info.extra]
+  ].map(([title,value])=>'<div'+(title==='زانیاریی زیادە'?' class="admin-detail-notes"':'')+'><dt>'+esc(title)+'</dt><dd>'+esc(value||'—')+'</dd></div>').join('')+'</dl></td>';
+  row.after(detail);button.setAttribute('aria-expanded','true');
+});
+function houseEditorValue(id){ return ($(id)?.value || '').trim(); }
+function fillHouseEditor(h){
+  const info=h?recordInfo(h):{};
+  $('houseEditComplex').value=h?.complex||$('adminComplexFilter')?.value||'';
+  $('houseEditNumber').value=h?.houseNum||'';
+  $('houseEditResident').value=info.residentName||resident(h||{}).replace(/^—$/,'');
+  $('houseEditOwnerName').value=info.ownerName||'';
+  const kind=statusKind(h?.occupancyType||h?.status); $('houseEditStatus').value=kind==='owner'?'خاوەن مولک':kind==='renter'?'کرێچی':'';
+  $('houseEditProfession').value=info.profession||'';
+  $('houseEditRenterPhone').value=info.renterPhone||'';
+  $('houseEditOwnerPhone').value=info.ownerPhone||'';
+  $('houseEditMobile').value=info.mobile||'';
+  $('houseEditNationality').value=info.nationality||'';
+  $('houseEditBlock').value=h?.block||'';
+  $('houseEditMonthlyRent').value=h?.monthlyRent||'';
+  $('houseEditExtra').value=h?.sourceExtra||h?.sourceColumn1||'';
+}
+window.openHouseEditor=id=>{
+  const h=id?houses.find(x=>x.id===id):null; fillHouseEditor(h);
+  const list=[...new Set(houses.map(x=>x.complex).filter(Boolean))].sort(),dl=$('houseComplexOptions');
+  if(dl)dl.innerHTML=list.map(c=>`<option value="${esc(c)}"></option>`).join('');
+  $('houseEditorTitle').textContent=h?'✏️ گۆڕینی زانیاریی خانوو':'➕ زیادکردنی خانوو'; $('houseEditorModal').classList.add('open'); setTimeout(()=>$('houseEditNumber').focus(),0);
+};
+window.closeHouseEditor=()=>{$('houseEditorModal')?.classList.remove('open');};
+window.saveHouseProfile=async()=>{
+  if(saving)return;
+  const complex=houseEditorValue('houseEditComplex'),houseNum=houseEditorValue('houseEditNumber');
+  if(!complex||!houseNum){alert('کۆمپلێکس و ژمارەی خانوو پڕ بکەرەوە.');return;}
+  const residentName=houseEditorValue('houseEditResident'),extra=houseEditorValue('houseEditExtra'),fields={complex,houseNum,houseNumber:houseNum,residentName,tenantName:residentName,renterName:residentName,name:residentName,ownerName:houseEditorValue('houseEditOwnerName'),occupancyType:houseEditorValue('houseEditStatus'),status:houseEditorValue('houseEditStatus'),profession:houseEditorValue('houseEditProfession'),renterPhone:houseEditorValue('houseEditRenterPhone'),ownerPhone:houseEditorValue('houseEditOwnerPhone'),mobile:houseEditorValue('houseEditMobile'),phone:houseEditorValue('houseEditMobile'),nationality:houseEditorValue('houseEditNationality'),block:houseEditorValue('houseEditBlock'),sourceExtra:extra,sourceColumn1:extra,updatedAt:new Date().toISOString(),updatedBy:'admin',changeType:'house-profile-updated'};
+  const rent=Number($('houseEditMonthlyRent')?.value);if(Number.isFinite(rent)&&rent>0)fields.monthlyRent=rent;
+  const existing=houses.find(h=>String(h.complex)===complex&&String(h.houseNum)===houseNum);
+  if(existing&&!confirm(`${complex} · ${houseNum}\nزانیاریی خانوو نوێ بکرێتەوە؟\nمێژووی پارەدان دەپارێزرێت.`))return;
+  saving=true;const button=$('houseEditorSaveBtn');if(button)button.disabled=true;
+  try{await runTransaction(db,async tx=>{const ref=existing?doc(db,'houses',existing.id):doc(db,'houses',crypto.randomUUID());let previous={};if(existing){const snap=await tx.get(ref);if(!snap.exists())throw Error('خانوو نەدۆزرایەوە.');previous=snap.data()||{};}tx.set(ref,existing?{...previous,...fields}:{...fields,sourceSchema:'manual-v1',sourceSheet:'manual',sourceSerial:houseNum,paidMonths:{},unpaidMonths:{},skippedMonths:{},payments:[],totalPaid:0,totalUnpaid:0,createdAt:new Date().toISOString()});});window.closeHouseEditor();$('paymentNotice').textContent=existing?'✓ زانیاریی خانوو نوێکرایەوە.':'✓ خانووی نوێ زیادکرا.';}catch(e){alert('پاشەکەوت نەکرا: '+e.message);}finally{saving=false;if(button)button.disabled=false;}
+};
+window.toggleAdminSortHouseNum=()=>{sort=-sort;render();};
+window.openPaymentModal=id=>{
+  const h=houses.find(h=>h.id===id);if(!h)return;
+  $('paymentAdvance').checked=false;preparePaymentYear($('paymentYear'));
+  activeId=id;selected=new Set(dueEntries(h).slice(0,1).map(e=>e.key));renderPayment();$('paymentModal').classList.add('open');
+};
+window.closePaymentModal=()=>{if(saving)return;activeId=null;selected.clear();$('paymentModal').classList.remove('open');};
+// Display-only history; never changes payable months or payment totals.
+function showPaymentHistory(element, house) {
+  if (element._historyReady && element._historySource === house?.skippedMonths) return;
+  element._historyReady = true; element._historySource = house?.skippedMonths;
+  const entries = skippedEntries(house), ranges = [];
+  for (const entry of entries) {
+    const serial = entry.year * 12 + entry.month;
+    const last = ranges[ranges.length - 1];
+    if (last && serial === last.serial + 1) {
+      last.end = entry.key; last.serial = serial;
+    } else ranges.push({start: entry.key, end: entry.key, serial});
+  }
+  element.hidden = entries.length === 0;
+  element.textContent = entries.length
+    ? 'زانیاریی پێشوو — قەرز نییە\n' +
+      entries.length + ' مانگی پێشوو تێپەڕێنراون؛ لە کۆی قەرز و وەسلدا ناژمێردرێن.\n' +
+      ranges.map(range => range.start === range.end ? range.start : range.start + ' → ' + range.end).join('، ')
+    : '';
+}
+// Keep month buttons mounted while selecting or entering cash (no grid rebuild).
+function renderMonthPicker(root, entries, selected, attribute, onToggle) {
+  const signature = entries.map(e=>e.key+(e.advance?'a':'d')).join('|');
+  let view = root._monthView;
+  if (!view || view.signature !== signature) {
+    root.innerHTML = entries.map(e=>`<button type="button" ${attribute}="${e.key}" class="month-choice" aria-pressed="false"><span dir="ltr">${e.key}</span><span data-month-label>${e.advance?'پێشوەختە':'قەرز'}</span></button>`).join('') || '<p class="col-span-full">هیچ مانگێک نییە بۆ پارەدان.</p>';
+    view = root._monthView = {signature, buttons:[...root.querySelectorAll('button')], entries:new Map(entries.map(e=>[e.key,e]))};
+  }
+  view.toggle = onToggle;
+  if (!root._monthListener) {
+    root.addEventListener('click', event=>{
+      const button = event.target.closest('button');
+      if (!button || !root.contains(button)) return;
+      const key = button.getAttribute(attribute);
+      if (root._monthView.entries.has(key)) root._monthView.toggle(key);
+    });
+    root._monthListener = true;
+  }
+  for (const button of view.buttons) {
+    const key = button.getAttribute(attribute), entry = view.entries.get(key), chosen = selected.has(key);
+    const state = chosen ? 'selected' : entry.advance ? 'advance' : 'debt';
+    if (button.dataset.state === state) continue;
+    button.dataset.state = state;
+    button.setAttribute('aria-pressed', String(chosen));
+    button.querySelector('[data-month-label]').textContent = chosen ? 'هەڵبژێردراوە ✓' : entry.advance ? 'پێشوەختە' : 'قەرز';
+  }
+}
+function preparePaymentYear(select) {
+  const year = Number(baghdadDate().slice(0,4));
+  select.innerHTML = [year,year+1].map(y=>`<option value="${y}">${y}</option>`).join('');
+  select.value = String(year);
+}
+window.refreshPaymentMonths=()=>renderPayment();
+window.selectPaymentYear=()=>{
+  const h=houses.find(h=>h.id===activeId);if(!h)return;
+  const year=$('paymentYear').value;
+  selected=new Set(paymentOptions(h,$('paymentAdvance').checked?year:null).filter(e=>String(e.year)===year).map(e=>e.key));
+  renderPayment();
+};
+function renderPayment(){
+  const h=houses.find(h=>h.id===activeId);if(!h){window.closePaymentModal();return;}
+  showPaymentHistory($('paymentHistoryNote'),h);
+  $('paymentYear').disabled=!$('paymentAdvance').checked;
+  const due=paymentOptions(h,$('paymentAdvance').checked?$('paymentYear').value:null),allowed=new Set(due.map(e=>e.key));selected=new Set([...selected].filter(k=>allowed.has(k)));
+  $('paymentHouseInfo').textContent=`${baghdadDate()} · ${h.complex} · ${label(h)} · ${resident(h)}`;
+  renderMonthPicker($('paymentMonthOptions'),due,selected,'data-month',key=>{
+    if(saving)return;
+    if(selected.has(key))selected.delete(key);else selected.add(key);
+    renderPayment();
+  });
+  const fee=serviceFeeForHouse(h),months=[...selected].sort();
+  $('paymentMath').textContent=monthDataWarning(h)?'بەرواری قەرزەکان تەواو نییە؛ پێویستی بە پشکنینە.':fee.amount?`${months.length} مانگ · ${months.join('، ')} · ${fmt(fee.amount)} × ${months.length} = ${fmt(fee.amount*months.length)}`:fee.rule;
+  $('paymentRecordBtn').disabled=saving||!months.length||!fee.amount||pending.some(p=>p.houseId===h.id);
+}
+window.recordPayment=async()=>{
+  if(saving||!activeId)return;
+  const h=houses.find(h=>h.id===activeId),months=[...selected].sort();
+  if(!h||!months.length||!serviceFeeForHouse(h).amount)return;
+  if(!confirm(`${label(h)} · ${resident(h)}\n${months.join('، ')}\n${fmt(serviceFeeForHouse(h).amount*months.length)}\nتۆمار بکرێت؟`))return;
+  saving=true;renderPayment();
+  try{
+    await queue.enqueue({id:crypto.randomUUID(),houseId:h.id,houseLabel:h.complex+' · '+label(h),months,rate:serviceFeeForHouse(h).amount,createdAt:new Date().toISOString(),state:'pending'});
+    saving=false;window.closePaymentModal();
+  }catch(e){alert('پاشەکەوت نەکرا: '+e.message);}finally{saving=false;if(activeId)renderPayment();}
+};
+async function start(){
+  if(started)return;started=true;$('loginScreen').classList.add('hidden');$('adminHeader').classList.remove('hidden');$('loadingBar').classList.remove('hidden');connection();
+  await persistence;
+  unsubscribe=onSnapshot(collection(db,'houses'),{includeMetadataChanges:true},snapshot=>{
+    metadata=snapshot.metadata;houses=snapshot.docs.map(d=>normalize(d.id,d.data()));
+    const filter=$('adminComplexFilter'),value=filter.value,complexes=[...new Set(houses.map(h=>h.complex))].filter(Boolean).sort();
+    filter.innerHTML='<option value="">هەموو کۆمپلێکسەکان</option>';
+    complexes.forEach(c=>filter.add(new Option(c,c)));filter.value=complexes.includes(value)?value:'';
+    $('mainContent').classList.remove('hidden');$('loadingBar').classList.add('hidden');render();if(activeId)renderPayment();connection();void queue.flush();
+  },error=>{
+    houses=[];render();$('mainContent').classList.add('hidden');$('loadingBar').classList.remove('hidden');
+    $('loadingBar').textContent='داتا بارنەکرا. دووبارە هەوڵ بدەرەوە.';
+    const retry=document.createElement('button');retry.textContent='هەوڵدانەوە';retry.className='m-3 p-3 rounded bg-white';retry.onclick=()=>{unsubscribe?.();started=false;start();};$('loadingBar').append(retry);console.error(error.code);
+  });
+  try{pending=await queue.list();renderQueue();void queue.flush();}catch{$('connectionStatus').textContent='پاشەکەوتکردنی ئۆفلاین بەردەست نییە؛ پارەدان تۆمار مەکە.';}
+}
+window.checkAdminPass=()=>{if($('adminPassInput').value==='nuenaran.admin.2026'){session(true);$('adminPassInput').value='';start();}else $('adminLoginError').classList.remove('hidden');};
+window.logoutAdmin=async()=>{
+  if(saving)return;
+  if(pending.length&&!confirm('پارەدانی چاوەڕوانکراو هەیە. بە دەرچوون سینککردن دەوەستێت. دڵنیایت؟'))return;
+  started=false;unsubscribe?.();houses=[];selected.clear();session(false);location.reload();
+};
+$('adminPassInput').addEventListener('keydown',e=>{if(e.key==='Enter')window.checkAdminPass();});
+['adminSearch','adminComplexFilter','adminDebtFilter'].forEach(id=>$(id).addEventListener('input',render));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closePaymentModal();});
+window.addEventListener('online',()=>{connection();if(started)void queue.flush();});window.addEventListener('offline',connection);
+let lastDate='';setInterval(()=>{const date=baghdadDate();if(lastDate!==date){lastDate=date;$('adminDate').textContent=date;render();if(activeId)renderPayment();}if(started)void queue.flush();},30000);
+$('adminDate').textContent=baghdadDate();if(session())void start();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+
+window.nuenaranLoginReady?.();
+</script>
+</body>
+</html>

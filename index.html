@@ -1,688 +1,1375 @@
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>کۆمپانیای نوینەران - سیستەمی بەڕێوەبردن</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
-        body { font-family: 'Noto Sans Arabic', 'Segoe UI', sans-serif; }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'; form-action 'self'">
+  <title>کۆمپانیای نوینەران - سیستەمی بەڕێوەبردن</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
+    body { font-family:'Noto Sans Arabic','Segoe UI',sans-serif; }
+    .badge { display:inline-block; padding:2px 10px; border-radius:9999px; font-size:.72rem; font-weight:600; }
+    .status-owner  { background:#dcfce7; color:#166534; }
+    .status-renter { background:#fee2e2; color:#991b1b; }
+    .complex-tag { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.68rem; background:#dbeafe; color:#1e40af; }
+    #tableWrap { overflow-x:auto; }
+    table { border-collapse:collapse; width:100%; min-width:1280px; }
+    th { background:#1e3a5f; color:#fff; padding:10px 12px; font-weight:600; position:sticky; top:0; z-index:10; white-space:nowrap; }
+    td { padding:8px 12px; border-bottom:1px solid #e5e7eb; vertical-align:middle; }
+    tr.main-row:hover td { background:#f0f9ff; }
+    tr.main-row:nth-child(4n+1) td,tr.main-row:nth-child(4n+2) td { background:#f8fafc; }
+    .stat-card { background:#fff; border-radius:10px; padding:14px 18px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    .stat-num  { font-size:1.7rem; font-weight:700; color:#1e3a5f; }
+    .stat-lbl  { font-size:.75rem; color:#6b7280; margin-top:2px; }
+    .detail-row { display:none; }
+    .detail-row.open { display:table-row; }
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); backdrop-filter:blur(3px); z-index:50; align-items:center; justify-content:center; padding:16px; }
+    .modal-bg.open { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; width:min(640px,100%); max-height:90vh; overflow-y:auto; direction:rtl; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+    .inp { width:100%; border:1.5px solid #cbd5e1; border-radius:8px; padding:9px 12px; font-size:.9rem; outline:none; transition:border-color .2s; box-sizing:border-box; }
+    .lbl { font-size:.75rem; color:#475569; font-weight:600; margin-bottom:3px; display:block; }
+    .change-box { border-radius:12px; padding:16px; text-align:center; color:#fff; }
+    .change-box.neutral { background:#64748b; }
+    .change-box.positive { background:#2563eb; }
+    .change-box.exact { background:#16a34a; }
+    .change-box.negative { background:#dc2626; }
+    .connection-status { transition:background-color .2s,color .2s; }
+  
+/* Spacious payment surface; scoped so the rest of the site stays unchanged. */
+#posModal .modal-box { width:min(1120px,100%); max-width:1120px; max-height:94vh; max-height:94dvh; }
+#posModal { font-size:1rem; line-height:1.65; }
+#posModal .text-xs, #posModal .lbl, #posModal [class*="text-["] { font-size:.875rem; }
+#posModal .text-sm, #posModal .inp { font-size:1rem; }
+#posModal h3 { font-size:1.25rem; }
+#posModal .truncate { white-space:normal; overflow-wrap:anywhere; }
+#posModal button { min-height:44px; }
+#posModal button:focus-visible { outline:3px solid #2563eb; outline-offset:3px; }
+#posModal .payment-month-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; max-height:24rem; overflow-y:auto; padding:4px; }
+#posModal .payment-month-grid button { min-height:94px; padding:14px; border-radius:12px; border-width:2px; }
+#posModal .payment-month-grid button > span { display:block; }
+#posModal .payment-month-grid button > span:first-child { font-size:1.25rem; font-weight:800; }
+#posModal .history-note { white-space:pre-line; padding:12px 16px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; color:#475569; font-size:.875rem; line-height:1.8; max-height:9rem; overflow-y:auto; }
+#posModal .history-note[hidden] { display:none; }
+@media(max-width:480px) {
+  #posModal { padding:8px; }
+  #posModal .payment-month-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  #posModal .payment-month-grid button { padding:10px; overflow-wrap:anywhere; }
+}
 
-        /* ── TABLE ── */
-        .status-paid   { background:#dcfce7; color:#166534; }
-        .status-unpaid { background:#fee2e2; color:#991b1b; }
-        #tableWrap { overflow-x:auto; }
-        table { border-collapse:collapse; width:100%; min-width:700px; }
-        th { background:#1e3a5f; color:#fff; padding:10px 12px; font-weight:600;
-             position:sticky; top:0; z-index:10; white-space:nowrap; }
-        td { padding:8px 12px; border-bottom:1px solid #e5e7eb; vertical-align:middle; }
-        tr:hover td { background:#f0f9ff; }
-        tr:nth-child(even) td { background:#f8fafc; }
-        tr:nth-child(even):hover td { background:#e0f2fe; }
-        .badge { display:inline-block; padding:2px 8px; border-radius:9999px; font-size:.75rem; font-weight:600; }
-        .complex-tag { display:inline-block; padding:2px 8px; border-radius:4px;
-                       font-size:.72rem; background:#dbeafe; color:#1e40af; }
-        #searchBox { direction:rtl; }
-        .stat-card { background:#fff; border-radius:10px; padding:16px 20px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
-        .stat-num  { font-size:1.8rem; font-weight:700; color:#1e3a5f; }
-        .stat-lbl  { font-size:.8rem; color:#6b7280; margin-top:2px; }
-
-        /* ── PAYMENT GRID PANEL ── */
-        .detail-panel { display:none; background:#f8fafc; border-top:1px solid #e5e7eb; }
-        .detail-panel.open { display:block; }
-
-        .year-block { margin-bottom:12px; }
-        .year-label { font-size:.7rem; font-weight:700; color:#64748b;
-                      margin-bottom:6px; letter-spacing:.05em; }
-
-        .month-grid { display:grid; grid-template-columns:repeat(12,1fr); gap:4px; }
-
-        .month-cell {
-            aspect-ratio:1;
-            border-radius:5px;
-            display:flex; align-items:center; justify-content:center;
-            font-size:.6rem; font-weight:700; cursor:default;
-            transition:transform .1s;
-            position:relative;
-        }
-        .month-cell:hover { transform:scale(1.15); z-index:5; }
-        .month-cell.paid    { background:#16a34a; color:#fff; }
-        .month-cell.unpaid  { background:#ef4444; color:#fff; }
-        .month-cell.nodata  { background:#e2e8f0; color:#94a3b8; }
-
-        .month-cell .tooltip {
-            display:none; position:absolute; bottom:120%; left:50%; transform:translateX(-50%);
-            background:#1e293b; color:#fff; font-size:.6rem; padding:3px 7px;
-            border-radius:4px; white-space:nowrap; z-index:20; pointer-events:none;
-        }
-        .month-cell:hover .tooltip { display:block; }
-
-        /* mini summary bar inside panel */
-        .pay-summary { display:flex; gap:12px; font-size:.75rem; color:#475569; margin-bottom:10px; }
-        .pay-summary span { display:flex; align-items:center; gap:4px; }
-        .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
-
-        /* row expand arrow */
-        .expand-btn { cursor:pointer; padding:4px 8px; border-radius:6px;
-                      background:#e0f2fe; color:#0369a1; font-size:.75rem;
-                      border:none; transition:background .15s; white-space:nowrap; }
-        .expand-btn:hover { background:#bae6fd; }
-
-        /* ── POS MODAL ── */
-        #posModal { display:none; position:fixed; inset:0; z-index:50;
-                    background:rgba(15,23,42,.55); backdrop-filter:blur(3px);
-                    align-items:center; justify-content:center; }
-        #posModal.open { display:flex; }
-
-        .modal-box { background:#fff; border-radius:16px; padding:28px 32px;
-                     width:min(420px,95vw); box-shadow:0 20px 60px rgba(0,0,0,.25);
-                     direction:rtl; }
-
-        .pos-label { font-size:.8rem; color:#475569; font-weight:600; margin-bottom:4px; display:block; }
-        .pos-input { width:100%; border:1.5px solid #cbd5e1; border-radius:10px;
-                     padding:10px 14px; font-size:1rem; outline:none; direction:ltr;
-                     text-align:left; transition:border-color .2s; }
-        .pos-input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.15); }
-
-        .change-display { background:linear-gradient(135deg,#1e3a5f,#1d4ed8);
-                          border-radius:12px; padding:18px 20px; text-align:center; color:#fff; }
-        .change-amount { font-size:2rem; font-weight:800; letter-spacing:-.02em; }
-        .change-lbl    { font-size:.78rem; opacity:.8; margin-top:2px; }
-        .change-display.negative { background:linear-gradient(135deg,#7f1d1d,#dc2626); }
-        .change-display.zero     { background:linear-gradient(135deg,#14532d,#16a34a); }
-    </style>
+/* Clear, colorful working surfaces without changing the site's navigation. */
+body { line-height:1.65; }
+#mainContent .text-xs, #mainContent .badge, #mainContent .complex-tag,
+#mainContent [class*="text-["], .modal-box .text-xs, .modal-box [class*="text-["] { font-size:.875rem; }
+#mainContent th, #mainContent td, .modal-box .text-sm { font-size:1rem; }
+#mainContent th { background:#e0e7ff; color:#312e81; padding:14px 12px; }
+#mainContent .main-row:nth-of-type(4n+1) { background:#f8fbff; }
+#mainContent button, .modal-box button { min-height:44px; }
+#mainContent .detail-row .max-h-36 { max-height:24rem; }
+#mainContent .detail-row [dir="ltr"] { padding:6px 10px; }
+.month-choice { background:#fff1f2; color:#9f1239; border:2px solid #fecdd3; font-weight:700; }
+.month-choice[data-state="advance"] { background:#eff6ff; color:#1d4ed8; border-color:#93c5fd; }
+.month-choice[data-state="selected"] { background:#047857; color:white; border-color:#047857; box-shadow:0 2px 4px #065f4620; }
+.advance-controls { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:12px 0; }
+.advance-controls label { display:flex; align-items:center; gap:8px; font-weight:700; }
+.advance-controls input { width:20px; height:20px; accent-color:#2563eb; }
+.advance-controls select, .advance-controls button { min-height:44px; padding:8px 12px; border:1px solid #bfdbfe; border-radius:10px; background:#eff6ff; color:#1e40af; }
+.advance-controls select:disabled { opacity:.5; }
+.month-legend { display:flex; flex-wrap:wrap; gap:16px; font-size:.875rem; margin:4px 0 12px; }
+.history-note { white-space:pre-line; padding:12px 16px; border:1px solid #cbd5e1; border-radius:12px; background:#f8fafc; color:#475569; font-size:.875rem; line-height:1.8; max-height:9rem; overflow-y:auto; }
+.history-note[hidden] { display:none; }
+#infoModalRoot .modal-box { font-size:1rem; }
+</style>
 </head>
 <body class="bg-slate-100 text-gray-800 min-h-screen">
 
-<!-- ── HEADER ── -->
-<header class="bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-3">
-        <div>
-            <h1 class="text-xl font-bold tracking-wide">کۆمپانیای نوینەران</h1>
-            <p class="text-blue-200 text-sm mt-0.5">سیستەمی بەڕێوەبردنی پارەدانی مانگانە</p>
-        </div>
-        <div class="flex gap-2 flex-wrap items-center">
-            <button onclick="openPOS()"
-                class="bg-green-500 hover:bg-green-400 text-white text-sm font-bold
-                       px-4 py-2 rounded-lg transition flex items-center gap-2 shadow">
-                💵 پارەدان / گەڕاندنەوە
-            </button>
-            <select id="complexFilter"
-                class="bg-blue-800 border border-blue-600 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
-                <option value="">هەموو کۆمپلێکسەکان</option>
-            </select>
-            <select id="statusFilter"
-                class="bg-blue-800 border border-blue-600 text-white text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 focus:outline-none">
-                <option value="">هەموو جۆرەکان</option>
-                <option value="مولك">خاوەن مولک</option>
-                <option value="كریچی">کرێجی</option>
-            </select>
-        </div>
+<!-- LOGIN -->
+<div id="loginScreen" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
+    <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <span class="text-white text-2xl font-bold">ن</span>
     </div>
+    <h2 class="text-xl font-bold text-blue-900 mb-1">کۆمپانیای نوینەران</h2>
+    <p class="text-gray-400 text-sm mb-6">تکایە وشەی نهێنی بنووسە</p>
+    <input type="password" id="passwordInput"
+      class="w-full border-2 border-gray-200 rounded-xl p-3 mb-3 text-center text-lg tracking-widest focus:border-blue-500 focus:outline-none font-mono"
+      dir="ltr" placeholder="••••••••">
+    <p id="loginError" class="text-red-500 text-xs font-bold mb-3 hidden">وشەی نهێنی هەڵەیە!</p>
+    <button onclick="checkPassword()"
+      class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
+      چوونە ژوورەوە
+    </button>
+    <a href="admin.html" class="block mt-3 text-xs text-gray-400 hover:text-blue-600">بەشی ئەدمین ←</a>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header id="mainHeader" class="hidden sticky top-0 z-40 bg-gradient-to-l from-blue-900 to-blue-700 text-white shadow-lg no-print">
+  <div class="max-w-7xl mx-auto px-4 py-3">
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+      <div class="flex items-center gap-3 min-w-0 flex-1">
+        <div class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+          <span class="text-white font-bold text-base">ن</span>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-base font-bold leading-tight truncate">کۆمپانیای نوینەران</h1>
+          <p class="text-blue-300 text-xs truncate">بەڕێوەبردنی پارەدان · کڵاود</p>
+        </div>
+        <div id="dateChip" class="bg-blue-800 border border-blue-600 text-blue-100 text-xs font-mono px-3 py-1.5 rounded-lg flex-shrink-0" dir="ltr">--/--/----</div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <select id="complexFilter" class="bg-blue-800 border border-blue-600 text-white text-xs rounded-lg px-2.5 py-2 focus:outline-none cursor-pointer">
+          <option value="">هەموو کۆمپلێکسەکان</option>
+        </select>
+        <select id="statusFilter" class="bg-blue-800 border border-blue-600 text-white text-xs rounded-lg px-2.5 py-2 focus:outline-none cursor-pointer">
+          <option value="">هەموو جۆرەکان</option>
+          <option value="owner">خاوەن مولک</option>
+          <option value="renter">کرێچی</option>
+        </select>
+        <button onclick="logoutDashboard()" class="bg-blue-800 border border-blue-600 hover:bg-blue-950 text-white text-xs rounded-lg px-2.5 py-2 transition">دەرچوون</button>
+      </div>
+    </div>
+  </div>
 </header>
 
-<!-- ── LOADING ── -->
-<div id="loadingBar" class="max-w-7xl mx-auto px-4 py-8">
-    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 flex items-center gap-4">
-        <svg class="animate-spin h-7 w-7 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-        </svg>
-        <div>
-            <p class="font-semibold text-blue-800">داتا بارکردنە...</p>
-            <p class="text-blue-600 text-sm mt-1" id="loadingDetail">فایلی Excel ئامادە دەکرێت</p>
-        </div>
-    </div>
+<div id="connectionStatus" role="status" aria-live="polite" class="hidden connection-status max-w-[98%] mx-auto mt-3 px-4 py-2 rounded-lg text-xs font-semibold"></div>
+
+<!-- LOADING -->
+<div id="loadingBar" class="hidden max-w-[98%] mx-auto px-4 py-8">
+  <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 flex items-center gap-4">
+    <svg class="animate-spin h-6 w-6 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+    </svg>
+    <p class="font-semibold text-blue-800 text-sm">داتا لە کڵاود دەهێنرێت...</p>
+  </div>
 </div>
 
-<!-- ── ERROR ── -->
-<div id="errorBar" class="max-w-7xl mx-auto px-4 py-8 hidden">
-    <div class="bg-red-50 border border-red-200 rounded-xl p-6">
-        <h3 class="font-bold text-red-800 text-lg">❌ هەڵە رووی دا</h3>
-        <p id="errorMsg" class="text-red-700 mt-2 text-sm font-mono"></p>
-        <p class="text-red-600 text-sm mt-3">
-            دڵنیابەرەوە کە فایلی <strong>data.xlsx</strong> لە هەمان فۆڵدەری <strong>index.html</strong> دایە لە GitHub.
-        </p>
+<!-- MAIN -->
+<main id="mainContent" class="hidden max-w-[98%] mx-auto px-4 py-5">
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+    <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">کۆی خانووەکان</div></div>
+    <div class="stat-card"><div class="stat-num text-blue-700" id="statSheets">0</div><div class="stat-lbl">کۆمپلێکس</div></div>
+    <div class="stat-card"><div class="stat-num text-green-700" id="statOwners">0</div><div class="stat-lbl">خاوەن مولک</div></div>
+    <div class="stat-card"><div class="stat-num text-orange-600" id="statRenters">0</div><div class="stat-lbl">کرێچی</div></div>
+  </div>
+
+  <!-- Search -->
+  <div class="flex gap-2 mb-3 flex-wrap">
+    <input id="searchBox" type="search" placeholder="🔍  گەڕان — ژمارە، ناو یان تەلەفۆن"
+      class="flex-1 min-w-48 px-4 py-2 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-white text-sm" dir="rtl">
+    <select id="debtFilter" class="border border-gray-300 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none">
+      <option value="">هەموو</option>
+      <option value="3">٣ مانگ یان زیاتر قەرزدار</option>
+      <option value="6">٦ مانگ یان زیاتر قەرزدار</option>
+      <option value="12">١٢ مانگ یان زیاتر قەرزدار</option>
+    </select>
+    <button onclick="toggleSortHouseNum()" id="sortBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition flex-shrink-0">
+      🔢 ژمارە ▲▼
+    </button>
+  </div>
+  <p class="text-xs text-gray-400 mb-3"><span id="resultCount">0</span> خانوو نیشان دەدرێت</p>
+
+  <!-- Table -->
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+    <div id="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th class="text-center w-10">#</th>
+            <th>کۆمپلێکس</th>
+            <th class="text-center">خانوو</th>
+            <th>ناوی دانیشتوو</th>
+            <th>ناوی خاووەن خانوو</th>
+            <th>جۆر</th>
+            <th>تەلەفۆنی کرێچی</th>
+            <th>تەلەفۆنی خاوەن مولک</th>
+            <th class="text-center">پارەی خزمەتگوزاری</th>
+            <th class="text-center">پارەدان / کردار</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
     </div>
-</div>
-
-<!-- ── MAIN ── -->
-<main id="mainContent" class="max-w-7xl mx-auto px-4 py-6 hidden">
-
-    <!-- Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="stat-card">
-            <div class="stat-num" id="statTotal">0</div>
-            <div class="stat-lbl">کۆی خانووەکان</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num text-blue-700" id="statSheets">0</div>
-            <div class="stat-lbl">کۆمپلێکس</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num text-green-700" id="statOwners">0</div>
-            <div class="stat-lbl">خاوەن مولک</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-num text-orange-600" id="statRenters">0</div>
-            <div class="stat-lbl">کرێجی</div>
-        </div>
+    <div id="emptyState" class="hidden py-16 text-center text-gray-400">
+      <p class="text-3xl mb-2">🔍</p>
+      <p class="font-semibold text-sm">هیچ ئەنجامێک نەدۆزرایەوە</p>
     </div>
-
-    <!-- Search -->
-    <div class="mb-4">
-        <input id="searchBox" type="search" placeholder="🔍  گەڕان — ناو، ژمارەی خانوو، تەلەفۆن..."
-            class="w-full md:w-96 px-4 py-2.5 rounded-xl border border-gray-300 shadow-sm
-                   focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:outline-none bg-white text-sm">
-    </div>
-
-    <p class="text-sm text-gray-500 mb-3"><span id="resultCount">0</span> خانوو نیشاندرا</p>
-
-    <!-- Table -->
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div id="tableWrap">
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>کۆمپلێکس</th>
-                        <th>ژمارەی خانوو</th>
-                        <th>ناوی سکنی</th>
-                        <th>جۆر</th>
-                        <th>تەلەفۆن</th>
-                        <th>دەستنیشانکردن</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody"></tbody>
-            </table>
-        </div>
-        <div id="emptyState" class="hidden py-16 text-center text-gray-400">
-            <p class="text-4xl mb-3">🔍</p>
-            <p class="font-semibold">هیچ ئەنجامێک نەدۆزرایەوە</p>
-        </div>
-    </div>
+  </div>
 </main>
 
-<!-- ── POS MODAL ── -->
-<div id="posModal" onclick="if(event.target===this)closePOS()">
-    <div class="modal-box">
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-lg font-bold text-slate-800">💵 حیساب و گەڕاندنەوە</h2>
-            <button onclick="closePOS()"
-                class="text-slate-400 hover:text-slate-700 text-xl font-bold leading-none">&times;</button>
-        </div>
-
-        <!-- Price per month -->
-        <div class="mb-4">
-            <label class="pos-label">نرخی مانگانە (IQD)</label>
-            <input id="posMonthly" type="number" class="pos-input" placeholder="٤٠٬٠٠٠"
-                   oninput="calcPOS()" value="">
-        </div>
-
-        <!-- Number of months -->
-        <div class="mb-4">
-            <label class="pos-label">ژمارەی مانگەکان</label>
-            <div class="flex gap-2 items-center">
-                <input id="posMonths" type="number" class="pos-input" placeholder="١"
-                       oninput="calcPOS()" value="" min="1">
-                <div class="text-center bg-slate-100 rounded-lg px-3 py-2 text-slate-600 text-sm whitespace-nowrap">
-                    کۆ: <strong id="posTotal" class="text-slate-800">—</strong>
-                </div>
-            </div>
-        </div>
-
-        <!-- Divider -->
-        <div class="border-t border-slate-200 my-5"></div>
-
-        <!-- Cash received -->
-        <div class="mb-5">
-            <label class="pos-label">پارەی وەرگیراو (IQD)</label>
-            <input id="posCash" type="number" class="pos-input text-lg font-bold"
-                   placeholder="١٠٠٬٠٠٠" oninput="calcPOS()">
-        </div>
-
-        <!-- Change display -->
-        <div id="changeDisplay" class="change-display">
-            <div class="change-lbl">بڕی ماوە بۆ گەڕاندنەوە</div>
-            <div class="change-amount" id="changeAmount">—</div>
-            <div class="change-lbl" id="changeNote"></div>
-        </div>
-
-        <!-- Legend -->
-        <div class="mt-4 flex gap-4 justify-center text-xs text-slate-400">
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-600 inline-block"></span>گەڕاندنەوە</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-600 inline-block"></span>تەواو دابین کرا</span>
-            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-600 inline-block"></span>کەمە</span>
-        </div>
+<!-- Worker POS calculator. Payment records remain in the Admin page. -->
+<div id="posModal" class="modal-bg" onclick="if(event.target===this)closePOS()">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-label="پارەدان و گەڕاندنەوە">
+    <div class="bg-blue-900 text-white px-5 py-4 flex justify-between items-center rounded-t-2xl">
+      <h3 class="font-bold text-base">💵 پارەدان و گەڕاندنەوە</h3>
+      <button onclick="closePOS()" class="text-blue-300 hover:text-white text-xl font-bold">✕</button>
     </div>
+    <div class="p-4 sm:p-5 space-y-4">
+      <section class="rounded-xl border-2 border-blue-200 bg-blue-50 p-3.5 shadow-sm" aria-live="polite">
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h4 class="text-base font-extrabold text-slate-800">🧾 زانیاریی وەسل</h4>
+          <div class="text-left">
+            <div class="text-[11px] font-bold text-slate-500">بەرواری وەسل</div>
+            <span id="posInvoiceDate" class="font-mono text-sm font-extrabold text-blue-900" dir="ltr">—</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+          <div class="col-span-2 rounded-lg bg-white p-2.5 sm:col-span-1"><div class="text-xs text-slate-500">ناوی کڕیار</div><div id="posInvoiceName" class="mt-0.5 truncate font-bold text-slate-800">—</div></div>
+          <div class="rounded-lg bg-white p-2.5"><div class="text-xs text-slate-500">ژمارەی خانوو</div><div id="posInvoiceHouse" class="mt-0.5 font-mono text-base font-extrabold text-blue-900" dir="ltr">—</div></div>
+          <div id="posInvoiceBlockWrap" class="hidden rounded-lg bg-white p-2.5"><div class="text-xs text-slate-500">بلۆک</div><div id="posInvoiceBlock" class="mt-0.5 truncate font-bold text-slate-800">—</div></div>
+          <div class="col-span-2 rounded-lg bg-white p-2.5 sm:col-span-1"><div class="text-xs text-slate-500">کۆمپلێکس</div><div id="posInvoiceComplex" class="mt-0.5 truncate font-bold text-slate-800">—</div></div>
+        </div>
+      </section>
+
+      <section class="rounded-xl border border-rose-200 bg-white p-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h4 class="text-base font-extrabold text-slate-800">مانگەکانی پارەدان</h4>
+            <p class="mt-0.5 text-xs text-slate-500">تەنها مانگە هەڵبژێردراوەکان لە وەسل بنووسە.</p>
+          </div>
+          <div class="flex gap-1.5 text-xs font-bold">
+            <button type="button" onclick="selectOldestPOSMonth()" class="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-blue-800 hover:bg-blue-100">تەنها کۆنترین</button>
+            <button type="button" onclick="selectAllPOSMonths()" class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-slate-700 hover:bg-slate-100">هەمووی</button>
+          </div>
+        </div>
+        <div class="advance-controls">
+        <label><input id="posAdvance" type="checkbox" onchange="calcPOS()"> پارەدانی پێشوەختە</label>
+        <label>ساڵ <select id="posYear" aria-label="ساڵی پارەدان" onchange="calcPOS()" disabled></select></label>
+        <button type="button" onclick="selectPOSYear()">هەموو مانگەکانی ئەم ساڵە</button>
+      </div>
+      <p class="month-legend"><span>🔴 قەرز</span><span>🔵 پێشوەختە — قەرز نییە</span><span>🟢 هەڵبژێردراو</span></p>
+        <div id="posInvoiceMonths" class="mt-3 payment-month-grid"></div>
+        <p id="posInvoiceMonthNote" class="mt-3 text-xs font-semibold text-slate-600"></p>
+      </section>
+
+      <aside id="posHistoryNote" class="history-note" hidden></aside>
+
+      <section class="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <div class="text-xs font-bold text-slate-500">نرخی یەک مانگ</div>
+            <input type="number" id="posMonthly" class="inp mt-1.5 bg-white font-mono font-bold" value="40000" oninput="calcPOS()">
+            <p id="posRateHelp" class="mt-1.5 text-xs text-slate-500"></p>
+          </div>
+          <div class="rounded-xl bg-blue-900 p-3 text-white">
+            <div class="text-xs font-bold text-blue-200">کۆی پارەی پێویست</div>
+            <div id="posDueTotal" class="mt-1 font-mono text-2xl font-extrabold" dir="ltr">—</div>
+            <div id="posSelectedSummary" class="mt-1 text-xs text-blue-100">—</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid gap-3 sm:grid-cols-2">
+        <div class="rounded-xl border border-slate-200 bg-white p-3.5">
+          <div class="flex items-center justify-between gap-2">
+            <label class="lbl mb-0">پارەی وەرگیراو لە کڕیار (IQD)</label>
+            <button type="button" onclick="usePOSTotal()" class="text-xs font-bold text-blue-700 hover:text-blue-900">کۆی پێویست</button>
+          </div>
+          <input type="text" inputmode="numeric" id="posCash" class="inp mt-2 font-mono text-xl font-extrabold" placeholder="نمونە: 100,000" oninput="calcPOS()" onchange="calcPOS()">
+          <div class="mt-2 grid grid-cols-4 gap-1.5" dir="ltr">
+            <button type="button" onclick="setPOSCash(50000)" class="rounded-lg bg-slate-100 px-1 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200">50K</button>
+            <button type="button" onclick="setPOSCash(100000)" class="rounded-lg bg-slate-100 px-1 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200">100K</button>
+            <button type="button" onclick="setPOSCash(250000)" class="rounded-lg bg-slate-100 px-1 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200">250K</button>
+            <button type="button" onclick="setPOSCash(500000)" class="rounded-lg bg-slate-100 px-1 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200">500K</button>
+          </div>
+        </div>
+        <div id="changeBox" class="change-box neutral flex flex-col justify-center">
+          <div class="text-sm font-bold opacity-90" id="changeTitle">پارەی گەڕاندنەوە</div>
+          <div class="mt-1 font-mono text-3xl font-extrabold" id="changeAmt" dir="ltr">—</div>
+          <div class="mt-1 text-xs opacity-90" id="changeNote"></div>
+        </div>
+      </section>
+      <p class="text-center text-xs text-slate-500">ئەم بەشە تەنها ژمێریاری وەسلە؛ تۆمارکردنی پارەدان لە بەشی ئەدمینە.</p>
+      <button onclick="closePOS()" class="w-full bg-blue-700 hover:bg-blue-600 text-white font-bold py-3 rounded-xl text-sm transition">داخستن</button>
+    </div>
+  </div>
 </div>
 
-<script>
-// ─────────────────────────────────────────────────────────────────────────────
-//  SHEET MAP — ground truth column offsets per sheet
-// ─────────────────────────────────────────────────────────────────────────────
-const SHEET_MAP = {
-    'تەلار ستی':          { headerRow:1, seqCol:1, nameCol:2, houseCol:3, statusCol:4, phoneCols:[7,9],    paymentsStart:10 },
-    'مارینا (١)':         { headerRow:1, seqCol:2, nameCol:3, houseCol:4, statusCol:5, phoneCols:[9,10],   paymentsStart:11 },
-    'مارینا (2)':         { headerRow:1, seqCol:2, nameCol:3, houseCol:4, statusCol:5, phoneCols:[8,9,11], paymentsStart:12 },
-    'مارينا (3)':         { headerRow:1, seqCol:1, nameCol:2, houseCol:1, statusCol:3, phoneCols:[6,8],    paymentsStart:9  },
-    'مارينا (4)':         { headerRow:1, seqCol:0, nameCol:1, houseCol:0, statusCol:2, phoneCols:[6],      paymentsStart:7  },
-    'قنديل':              { headerRow:1, seqCol:0, nameCol:2, houseCol:1, statusCol:3, phoneCols:[6],      paymentsStart:7  },
-    'دوبەی ستی':          { headerRow:1, seqCol:1, nameCol:2, houseCol:3, statusCol:4, phoneCols:[7,8],    paymentsStart:9  },
-    'شوقەكان تەلار ستی':  { headerRow:2, seqCol:1, nameCol:2, houseCol:1, statusCol:3, phoneCols:[6],      paymentsStart:7  },
-    'دووكان':             { headerRow:1, seqCol:0, nameCol:1, houseCol:0, statusCol:2, phoneCols:[4],      paymentsStart:5  },
-    'پێشانگا':            { headerRow:1, seqCol:0, nameCol:1, houseCol:0, statusCol:2, phoneCols:[5],      paymentsStart:6  },
+<script id="login-load-guard">
+(() => {
+  const input = document.getElementById('passwordInput');
+  const error = document.getElementById('loginError');
+  const button = input.parentElement.querySelector('button[onclick="checkPassword()"]');
+  if (!button) return;
+  const label = button.textContent;
+  const originalError = error.textContent;
+  button.disabled = true;
+  button.textContent = 'چاوەڕێ بکە…';
+  let ready = false;
+  let retry;
+  function failed() {
+    if (ready) return;
+    error.textContent = 'پەڕە تەواو بارنەبوو. ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە.';
+    error.classList.remove('hidden');
+    if (!retry) {
+      retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = 'هەوڵدانەوە';
+      retry.className = 'block w-full rounded-lg bg-slate-200 text-slate-900 p-3 mt-3';
+      retry.addEventListener('click', () => location.reload());
+      button.after(retry);
+    }
+  }
+  const timer = setTimeout(failed, 12000);
+  window.nuenaranLoginReady = () => {
+    ready = true;
+    clearTimeout(timer);
+    button.disabled = false;
+    button.textContent = label;
+    error.textContent = originalError;
+    error.classList.add('hidden');
+    retry?.remove();
+    if (document.getElementById('loginScreen').classList.contains('hidden')) return;
+    input.focus();
+  };
+  window.addEventListener('error', event => {
+    if (event.target?.id === 'pageApp') failed();
+  }, true);
+})();
+</script>
+<script type="module" id="pageApp">
+// Embedded business.js: this page also works without separate local module files.
+const __local_business_js = (() => {
+// Shared accounting rules. Skips are explicit records, never inferred after a new payment.
+function normalizeText(value) {
+  return String(value ?? '').normalize('NFKC').replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/ك/g,'ک').replace(/[ىي]/g,'ی')
+    .replace(/[\u200c\u200d\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,'').trim();
+}
+const searchText = value => normalizeText(value).replace(/\s+/g,'').toLowerCase();
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function monthNumber(value) {
+  const text = normalizeText(value);
+  return /^\d{1,2}$/.test(text) && +text >= 1 && +text <= 12 ? +text : null;
+}
+function parseMonthKey(value) {
+  const match = normalizeText(value).match(/^(\d{4})[-/](\d{1,2})$/);
+  if (!match || !monthNumber(match[2]) || +match[1] < 1900 || +match[1] > 2200) return null;
+  const year = +match[1], month = +match[2];
+  return { key: `${year}-${String(month).padStart(2,'0')}`, year, month };
+}
+function monthEntries(map) {
+  const result = new Map();
+  const add = value => { const entry = parseMonthKey(value); if(entry) result.set(entry.key, entry); };
+  if (Array.isArray(map)) map.forEach(value => add(value?.key ?? value));
+  else if (map && typeof map === 'object') Object.entries(map).forEach(([key,value]) => {
+    if (parseMonthKey(key)) { add(key); return; }
+    const year = normalizeText(key);
+    if (!/^\d{4}$/.test(year)) return;
+    const months = Array.isArray(value) ? value : value && typeof value === 'object' ? Object.keys(value) : [value];
+    months.forEach(month => { if (monthNumber(month)) add(`${year}-${monthNumber(month)}`); });
+  });
+  return [...result.values()].sort((a,b)=>a.key.localeCompare(b.key));
+}
+function monthMap(entries) {
+  const map = {};
+  monthEntries(entries).forEach(({year,month}) => (map[year] ??= []).push(String(month)));
+  return map;
+}
+const billingDateFormatter = new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'});
+let dateSecond = null, dateValue = '';
+function baghdadDate(now = new Date()) {
+  const second = Math.floor(now.getTime() / 1000);
+  if (second === dateSecond) return dateValue;
+  const parts = billingDateFormatter.formatToParts(now);
+  const get = type => parts.find(p=>p.type===type).value;
+  dateSecond = second;
+  return dateValue = `${get('year')}-${get('month')}-${get('day')}`;
+}
+// Firestore snapshots replace these maps. Reuse derived dates until a map changes.
+const monthStateCache = new WeakMap();
+function monthState(house) {
+  if (!house || typeof house !== 'object') return {skipped:[],paid:[],unpaid:[]};
+  const previous = monthStateCache.get(house);
+  if (previous && previous.paidSource === house.paidMonths && previous.unpaidSource === house.unpaidMonths && previous.skippedSource === house.skippedMonths) return previous;
+  const skipped = monthEntries(house.skippedMonths);
+  const excluded = new Set(skipped.map(e=>e.key));
+  const paid = monthEntries(house.paidMonths).filter(e=>!excluded.has(e.key));
+  paid.forEach(e=>excluded.add(e.key));
+  const unpaid = monthEntries(house.unpaidMonths).filter(e=>!excluded.has(e.key));
+  const result = {skipped,paid,unpaid,paidSource:house.paidMonths,unpaidSource:house.unpaidMonths,skippedSource:house.skippedMonths};
+  monthStateCache.set(house,result);
+  return result;
+}
+function skippedEntries(house) { return monthState(house).skipped; }
+function paidEntries(house) { return monthState(house).paid; }
+function unpaidEntries(house) { return monthState(house).unpaid; }
+function dueEntries(house, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7), state = monthState(house);
+  if (state.duePeriod !== current) {
+    state.duePeriod = current;
+    state.due = state.unpaid.filter(e=>e.key < current);
+  }
+  return state.due;
+}
+function settledEntries(house, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7);
+  return paidEntries(house).filter(e=>e.key < current);
+}
+function paymentOptions(house, advanceYear = null, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7);
+  const result = dueEntries(house,now).map(e=>({...e,advance:false}));
+  const year = Number(advanceYear);
+  if (!Number.isInteger(year) || year < Number(current.slice(0,4)) || year > 2200) return result;
+  const excluded = new Set([...paidEntries(house),...skippedEntries(house)].map(e=>e.key));
+  for (let month=1; month<=12; month++) {
+    const entry = parseMonthKey(year+'-'+month);
+    if (entry.key >= current && !excluded.has(entry.key)) result.push({...entry,advance:true});
+  }
+  return result.sort((a,b)=>a.key.localeCompare(b.key));
+}
+function monthDataWarning(house) {
+  const hasMissingDates = Number(house?.totalUnpaid) > 0 && !monthEntries(house?.unpaidMonths).length;
+  const rawPaidCount = Object.values(house?.paidMonths || {}).reduce((sum,v)=>sum+(Array.isArray(v)?v.length:0),0);
+  const duplicatePaid = rawPaidCount > monthEntries(house?.paidMonths).length;
+  const paid = new Set(monthEntries(house?.paidMonths).map(e=>e.key));
+  const overlap = monthEntries(house?.unpaidMonths).some(e=>paid.has(e.key));
+  return Boolean(house?.billingReview || hasMissingDates || duplicatePaid || overlap);
+}
+function parseIQD(value) {
+  const text = normalizeText(value).replace(/٬/g,',');
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(text)) return null;
+  const amount = Number(text.replace(/,/g,''));
+  return Number.isSafeInteger(amount) && amount >= 0 && amount <= 1000000000 ? amount : null;
+}
+function statusKind(value) {
+  const text = searchText(value).replace(/ۆ/g,'و');
+  if (/^(کر[ێی][چج]ی?|کر[چج]ی|کرچی|کرێنشین|renter|tenant)$/.test(text)) return 'renter';
+  if (/^(مول+ک|ملک|مالک|خاوەن|خاوەنمولک|خاوەنخانوو|مومک|owner)$/.test(text)) return 'owner';
+  return 'other';
+}
+function compareHouses(a,b) {
+  return normalizeText(a.complex ?? a.complexName).localeCompare(normalizeText(b.complex ?? b.complexName),'en',{numeric:true,sensitivity:'base'})
+    || normalizeText(a.houseNum ?? a.houseNumber).localeCompare(normalizeText(b.houseNum ?? b.houseNumber),'en',{numeric:true,sensitivity:'base'})
+    || normalizeText(a.block).localeCompare(normalizeText(b.block),'en',{numeric:true}) || String(a.id??'').localeCompare(String(b.id??''));
+}
+function planPayment(house, selectedKeys, now = new Date(), {allowAdvance = false} = {}) {
+  const keys = [...new Set(selectedKeys)];
+  const due = new Set(dueEntries(house,now).map(e=>e.key));
+  const current = baghdadDate(now).slice(0,7);
+  const excluded = new Set([...paidEntries(house),...skippedEntries(house)].map(e=>e.key));
+  const eligible = key => due.has(key) || (allowAdvance && parseMonthKey(key)?.key === key && key >= current && !excluded.has(key));
+  if (!keys.length || keys.length !== selectedKeys.length || keys.some(k=>!eligible(k))) throw new Error('مانگەکان گۆڕاون، دراون یان تێپەڕێنراون. داتاکان نوێ بکەرەوە.');
+  const paid = [...paidEntries(house),...keys.map(parseMonthKey)];
+  const unpaid = unpaidEntries(house).filter(e=>!keys.includes(e.key));
+  return {paidMonths:monthMap(paid),unpaidMonths:monthMap(unpaid),totalPaid:paid.length,totalUnpaid:unpaid.length};
+}
+
+return { normalizeText, searchText, escapeHTML, monthNumber, parseMonthKey, monthEntries, monthMap, baghdadDate, skippedEntries, paidEntries, unpaidEntries, dueEntries, settledEntries, paymentOptions, monthDataWarning, parseIQD, statusKind, compareHouses, planPayment };
+})();
+
+// Embedded service-fees.js: this page also works without separate local module files.
+const __local_service_fees_js = (() => {
+const serviceDigitMap = { '٠':'0', '١':'1', '٢':'2', '٣':'3', '٤':'4', '٥':'5', '٦':'6', '٧':'7', '٨':'8', '٩':'9', '۰':'0', '۱':'1', '۲':'2', '۳':'3', '۴':'4', '۵':'5', '۶':'6', '۷':'7', '۸':'8', '۹':'9' };
+function normalizeServiceText(value){
+  return String(value ?? '')
+    .replace(/[٠-٩۰-۹]/g, digit => serviceDigitMap[digit] || digit)
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[ةۀ]/g, 'ە')
+    .replace(/ۆ/g, 'و')
+    .replace(/[\u200c\u200f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+function compactServiceText(value){
+  return normalizeServiceText(value).replace(/[()[\]{}]/g, '').replace(/[\s._\-–—]/g, '');
+}
+function isShopComplex(value){
+  return /دو+کان/.test(compactServiceText(value));
+}
+const qandilApartmentRates = {
+  A: { amount: 30000, metre: '125m²' },
+  B: { amount: 37000, metre: '150m²' },
+  D1: { amount: 20000, metre: '80m²' },
+  D2: { amount: 20000, metre: '80m²' },
+  C: { amount: 45000, metre: '200m²' },
+  CDP: { amount: 35000, metre: '100 Dublex' }
+};
+function qandilApartmentInfo(house = {}){
+  const candidates = [
+    house.qandilType, house.apartmentType, house.houseType, house.unitType,
+    house.houseNum, house.houseNumber, house.houseNumStr, house['house num']
+  ];
+  for (const candidate of candidates) {
+    const value = normalizeServiceText(candidate).toUpperCase().replace(/[\s()\-–—]/g, '');
+    const type = value.startsWith('CDP') ? 'CDP'
+      : value.startsWith('D1') ? 'D1'
+      : value.startsWith('D2') ? 'D2'
+      : value.startsWith('A') ? 'A'
+      : value.startsWith('B') ? 'B'
+      : value.startsWith('C') ? 'C'
+      : '';
+    if (type && qandilApartmentRates[type]) return { type, ...qandilApartmentRates[type] };
+  }
+  return null;
+}
+function missingServiceFeeLabel(fee){
+  if (fee.needsDarab) return 'دەراب پێویستە';
+  if (fee.needsApartmentType) return 'جۆری شوقە پێویستە بۆ قندیل';
+  return 'نرخ دیاری نەکراوە';
+}
+function serviceFeeForHouse(house = {}){
+  const complex = compactServiceText(house.complex ?? house.complexName);
+  const houseNumber = normalizeServiceText(house.houseNum ?? house.houseNumber ?? house.houseNumStr ?? house['house num']);
+  const darabValue = house.darab ?? house.derab ?? house.darb ?? house['دەراب'] ?? '';
+  const darab = Number(normalizeServiceText(darabValue));
+  const manualNumber = Number(house.monthlyRent ?? house.rentPerMonth);
+  const manualAmount = Number.isSafeInteger(manualNumber) && manualNumber > 0 && manualNumber <= 1000000000 ? manualNumber : 0;
+
+  if (['تەلارسیتی', 'تەلارستی'].includes(complex)) return { amount: 40000, automatic: true, rule: 'تەلار سیتی — 40,000 IQD' };
+  if (complex === 'مارینا1') return { amount: 55000, automatic: true, rule: 'مارینا (١) — 55,000 IQD' };
+  if (complex === 'مارینا2') return { amount: 53000, automatic: true, rule: 'مارینا (٢) — 53,000 IQD' };
+  if (complex === 'مارینا3') return { amount: 55000, automatic: true, rule: 'مارینا (٣) — 55,000 IQD' };
+  if (complex === 'مارینا4') {
+    const hasAB = /^(?:\d+\s*[ab]|[ab]\s*\d+)$/i.test(houseNumber);
+    return {
+      amount: hasAB ? 40000 : 55000,
+      automatic: true,
+      rule: hasAB ? 'مارینا (٤) — A/B: 40,000 IQD' : 'مارینا (٤) — بێ A/B: 55,000 IQD'
+    };
+  }
+  if (['شوقەکانتەلارسیتی', 'شوقەکانتەلارستی', 'شوقەکانیتەلارسیتی'].includes(complex)) return { amount: 25000, automatic: true, rule: 'شوقەکان تەلار سیتی — 25,000 IQD' };
+  if (complex === 'قندیل') {
+    const qandil = qandilApartmentInfo(house);
+    if (qandil) return {
+      amount: qandil.amount,
+      automatic: true,
+      qandil,
+      rule: `قندیل — ${qandil.type} · ${qandil.metre}: ${qandil.amount.toLocaleString('en-US')} IQD`
+    };
+    return {
+      amount: manualAmount,
+      automatic: false,
+      needsApartmentType: !manualAmount,
+      rule: manualAmount ? 'قندیل — نرخی تۆمارکراو' : 'قندیل — جۆری شوقە پێویستە بۆ قندیل'
+    };
+  }
+  if (isShopComplex(complex)) {
+    const shopRates = { 1: 15000, 2: 20000, 3: 25000, 4: 30000 };
+    if (shopRates[darab]) return { amount: shopRates[darab], automatic: true, rule: `دووكان — دەراب ${darab}: ${shopRates[darab].toLocaleString('en-US')} IQD` };
+    return { amount: 0, automatic: false, needsDarab: true, rule: 'دووكان — دەراب پێویستە' };
+  }
+  if (['دوبایسیتی', 'دوبەیستی', 'دوبەیسیتی'].includes(complex)) return { amount: 150000, automatic: true, rule: 'دوبەی ستی — 150,000 IQD' };
+  if (complex === 'پێشانگا') return { amount: 100000, automatic: true, rule: 'پێشانگا — 100,000 IQD' };
+  return { amount: manualAmount, automatic: false, rule: manualAmount ? 'نرخی دەستی (دەستکاریکراو) / تۆمارکراو' : 'نرخ دیاری نەکراوە' };
+}
+
+
+return { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmentInfo, missingServiceFeeLabel, serviceFeeForHouse };
+})();
+
+
+const { paymentOptions, settledEntries, escapeHTML, monthEntries, dueEntries, paidEntries, skippedEntries, monthDataWarning, parseIQD, compareHouses, searchText, statusKind, baghdadDate } = __local_business_js;
+const { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmentInfo, missingServiceFeeLabel, serviceFeeForHouse } = __local_service_fees_js;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, collection, onSnapshot, enableMultiTabIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+const FB = {
+  apiKey:"AIzaSyBe2dBVhBMFR7ZAR3Z26ZG0q8e2KQTHlII",
+  authDomain:"nuenaran.firebaseapp.com",
+  projectId:"nuenaran",
+  storageBucket:"nuenaran.firebasestorage.app",
+  messagingSenderId:"271798697223",
+  appId:"1:271798697223:web:8dade3ac017ce1a9c399a2"
 };
 
-// Year ranges each sheet starts from (first year in their data column)
-const SHEET_YEAR_START = {
-    'تەلار ستی':2019, 'مارینا (١)':2019, 'مارینا (2)':2019, 'مارينا (3)':2019,
-    'مارينا (4)':2020, 'قنديل':2020, 'دوبەی ستی':2019,
-    'شوقەكان تەلار ستی':2020, 'دووكان':2019, 'پێشانگا':2020,
-};
-
-// Kurdish month names
-const MONTHS_KU = ['١','٢','٣','٤','٥','٦','٧','٨','٩','١٠','١١','١٢'];
-const MONTHS_EN = ['1','2','3','4','5','6','7','8','9','10','11','12'];
-
-const SKIP_SHEETS = new Set(['خشته','Sheet1']);
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  STATE
-// ─────────────────────────────────────────────────────────────────────────────
-let allHouses = [];
-let filtered  = [];
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  FETCH + PARSE
-// ─────────────────────────────────────────────────────────────────────────────
-async function loadExcelData() {
-    const detail = document.getElementById('loadingDetail');
-    try {
-        detail.textContent = 'فایل دانلۆد دەکرێت...';
-        const response = await fetch(`data.xlsx?v=${Date.now()}`, { cache:'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-
-        detail.textContent = 'فایلی Excel ڕووکەش دەکرێت...';
-        const arrayBuffer = await response.arrayBuffer();
-
-        detail.textContent = 'شیتەکان پارس دەکرێن...';
-        const workbook = XLSX.read(arrayBuffer, { type:'array', cellDates:false, cellNF:false, cellStyles:false });
-
-        for (const sheetName of workbook.SheetNames) {
-            if (SKIP_SHEETS.has(sheetName)) continue;
-            const map = SHEET_MAP[sheetName];
-            if (!map) continue;
-
-            const sheet = workbook.Sheets[sheetName];
-            const rows  = XLSX.utils.sheet_to_json(sheet, { header:1, defval:null });
-            const dataStart = map.headerRow + 1;
-
-            for (let i = dataStart; i < rows.length; i++) {
-                const row = rows[i];
-                if (!row || !row.length) continue;
-
-                const seqVal = row[map.seqCol];
-                if (seqVal === null || seqVal === undefined || seqVal === '') continue;
-                if (typeof seqVal !== 'number' && isNaN(Number(seqVal))) continue;
-
-                const name     = cleanStr(row[map.nameCol]);
-                const houseNum = String(row[map.houseCol] ?? '').trim();
-                const status   = cleanStr(row[map.statusCol]);
-                if (!name && !houseNum) continue;
-
-                const phones = map.phoneCols
-                    .map(idx => row[idx])
-                    .filter(v => v && v !== 0 && String(v).trim() !== '')
-                    .map(v => String(v).trim())
-                    .join(' - ');
-
-                // ── Extract payment data as structured year→month array ──
-                // paymentData[yearIndex][monthIndex] = 'paid'|'unpaid'|'nodata'
-                const rawPayments = row.slice(map.paymentsStart);
-                const yearStart   = SHEET_YEAR_START[sheetName] || 2019;
-                const paymentData = buildPaymentGrid(rawPayments, yearStart);
-
-                let paid = 0, unpaid = 0;
-                paymentData.forEach(yr => yr.months.forEach(s => {
-                    if (s === 'paid') paid++;
-                    else if (s === 'unpaid') unpaid++;
-                }));
-
-                allHouses.push({
-                    complex: sheetName,
-                    houseNum: houseNum || String(seqVal),
-                    name:     name     || 'نەزانراو',
-                    status:   status   || '',
-                    phone:    phones   || 'نییە',
-                    paid, unpaid,
-                    paymentData,
-                });
-            }
-        }
-
-        if (allHouses.length === 0) throw new Error('هیچ داتایەک نەدۆزرایەوە');
-
-        buildUI();
-        render();
-
-    } catch (err) {
-        console.error(err);
-        document.getElementById('loadingBar').classList.add('hidden');
-        document.getElementById('errorBar').classList.remove('hidden');
-        document.getElementById('errorMsg').textContent = err.message;
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  BUILD PAYMENT GRID DATA
-//  rawPayments: flat array of cell values starting at paymentsStart
-//  Returns: [{year, months:['paid'|'unpaid'|'nodata', ...]}, ...]
-// ─────────────────────────────────────────────────────────────────────────────
-function buildPaymentGrid(rawPayments, yearStart) {
-    const result = [];
-    // Each year = 12 columns. Slice into chunks.
-    for (let yi = 0; yi < 8; yi++) { // max 8 years (2019-2026)
-        const slice = rawPayments.slice(yi * 12, yi * 12 + 12);
-        if (slice.every(v => v === null || v === undefined)) break; // no more data
-
-        const months = slice.map(v => {
-            if (v === null || v === undefined) return 'nodata';
-            if (typeof v === 'number') {
-                return v === 0 ? 'paid' : 'nodata'; // 0 = paid, other numbers rare
-            }
-            if (String(v).trim() === '0' || String(v).trim() === '0.0') return 'paid';
-            return 'nodata';
-        });
-
-        // Only include year if it has at least one non-nodata cell
-        if (months.some(s => s !== 'nodata')) {
-            result.push({ year: yearStart + yi, months });
-        }
-    }
-    return result;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  BUILD UI
-// ─────────────────────────────────────────────────────────────────────────────
-function buildUI() {
-    document.getElementById('loadingBar').classList.add('hidden');
-    document.getElementById('mainContent').classList.remove('hidden');
-
-    const complexes = [...new Set(allHouses.map(h => h.complex))];
-    const sel = document.getElementById('complexFilter');
-    complexes.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c; opt.textContent = c;
-        sel.appendChild(opt);
-    });
-
-    const owners  = allHouses.filter(h => normalizeStatus(h.status) === 'owner').length;
-    const renters = allHouses.filter(h => normalizeStatus(h.status) === 'renter').length;
-    document.getElementById('statTotal').textContent   = allHouses.length.toLocaleString();
-    document.getElementById('statSheets').textContent  = complexes.length;
-    document.getElementById('statOwners').textContent  = owners.toLocaleString();
-    document.getElementById('statRenters').textContent = renters.toLocaleString();
-
-    document.getElementById('searchBox').addEventListener('input',      applyFilters);
-    document.getElementById('complexFilter').addEventListener('change', applyFilters);
-    document.getElementById('statusFilter').addEventListener('change',  applyFilters);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  FILTER
-// ─────────────────────────────────────────────────────────────────────────────
-function applyFilters() {
-    const query   = document.getElementById('searchBox').value.trim().toLowerCase();
-    const complex = document.getElementById('complexFilter').value;
-    const status  = document.getElementById('statusFilter').value;
-
-    filtered = allHouses.filter(h => {
-        if (complex && h.complex !== complex) return false;
-        if (status  && !h.status.includes(status)) return false;
-        if (query) {
-            const hay = `${h.name} ${h.houseNum} ${h.phone} ${h.complex}`.toLowerCase();
-            if (!hay.includes(query)) return false;
-        }
-        return true;
-    });
-    render();
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  RENDER TABLE
-// ─────────────────────────────────────────────────────────────────────────────
-function render() {
-    const list  = anyFilterActive() ? filtered : allHouses;
-    const tbody = document.getElementById('tableBody');
-    const empty = document.getElementById('emptyState');
-
-    document.getElementById('resultCount').textContent = list.length.toLocaleString();
-
-    if (list.length === 0) {
-        tbody.innerHTML = '';
-        empty.classList.remove('hidden');
-        return;
-    }
-    empty.classList.add('hidden');
-
-    const fragment = document.createDocumentFragment();
-
-    list.forEach((h, i) => {
-        // ── Main row ──
-        const tr = document.createElement('tr');
-        tr.style.cursor = 'pointer';
-
-        const paidPct   = h.paid + h.unpaid > 0 ? Math.round(h.paid / (h.paid + h.unpaid) * 100) : 0;
-        const miniBar   = `<div style="width:60px;height:5px;background:#fee2e2;border-radius:3px;display:inline-block;vertical-align:middle;overflow:hidden;">
-                             <div style="width:${paidPct}%;height:100%;background:#16a34a;"></div>
-                           </div>`;
-
-        tr.innerHTML = `
-            <td class="text-gray-400 text-sm text-center">${i + 1}</td>
-            <td><span class="complex-tag">${esc(h.complex)}</span></td>
-            <td class="font-semibold text-center">${esc(h.houseNum)}</td>
-            <td>${esc(h.name)}</td>
-            <td>${statusBadge(h.status)}</td>
-            <td class="text-sm text-gray-600 font-mono" dir="ltr">${esc(h.phone)}</td>
-            <td class="text-center">
-                <button class="expand-btn" onclick="togglePanel(event,${i})">
-                    📅 مێژووی پارەدان
-                </button>
-                <div class="text-xs text-gray-400 mt-1">${miniBar} ${paidPct}%</div>
-            </td>
-        `;
-
-        // ── Detail panel row ──
-        const panelRow = document.createElement('tr');
-        panelRow.id = `panel-${i}`;
-
-        const td = document.createElement('td');
-        td.colSpan = 7;
-        td.style.padding = '0';
-
-        const panel = document.createElement('div');
-        panel.className = 'detail-panel';
-        panel.id = `detail-${i}`;
-        panel.innerHTML = buildPaymentPanel(h);
-
-        td.appendChild(panel);
-        panelRow.appendChild(td);
-
-        fragment.appendChild(tr);
-        fragment.appendChild(panelRow);
-    });
-
-    tbody.innerHTML = '';
-    tbody.appendChild(fragment);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  BUILD PAYMENT PANEL HTML
-// ─────────────────────────────────────────────────────────────────────────────
-function buildPaymentPanel(h) {
-    if (!h.paymentData || h.paymentData.length === 0) {
-        return '<div style="padding:16px;color:#94a3b8;font-size:.8rem;">هیچ داتایەکی پارەدان نییە</div>';
-    }
-
-    const totalTracked = h.paid + h.unpaid;
-    const pct = totalTracked > 0 ? Math.round(h.paid / totalTracked * 100) : 0;
-
-    let html = `
-        <div style="padding:16px 20px;">
-            <div class="pay-summary">
-                <span><span class="dot" style="background:#16a34a"></span>پارەدراو: <strong>${h.paid}</strong></span>
-                <span><span class="dot" style="background:#ef4444"></span>نەدراو: <strong>${h.unpaid}</strong></span>
-                <span><span class="dot" style="background:#e2e8f0"></span>داتا نییە</span>
-                <span style="margin-right:auto">
-                    <strong>${pct}%</strong> پارەی دراوە
-                </span>
-            </div>
-    `;
-
-    // Render year blocks
-    h.paymentData.forEach(yr => {
-        html += `<div class="year-block">
-            <div class="year-label">${yr.year}</div>
-            <div class="month-grid">`;
-
-        yr.months.forEach((state, mi) => {
-            const label  = MONTHS_EN[mi];
-            const tip    = `${yr.year} / مانگی ${mi + 1}`;
-            const stateLabel = state === 'paid' ? 'پارەی دراوە ✓' : state === 'unpaid' ? 'پارەی نەدراوە ✗' : '—';
-            html += `<div class="month-cell ${state}" title="${tip}">
-                        ${label}
-                        <span class="tooltip">${tip}: ${stateLabel}</span>
-                     </div>`;
-        });
-
-        html += `</div></div>`;
-    });
-
-    html += `</div>`;
-    return html;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  TOGGLE PANEL
-// ─────────────────────────────────────────────────────────────────────────────
-let openPanel = null;
-
-function togglePanel(evt, idx) {
-    evt.stopPropagation();
-    const panel = document.getElementById(`detail-${idx}`);
-    const btn   = evt.currentTarget;
-
-    if (openPanel !== null && openPanel !== idx) {
-        const prev = document.getElementById(`detail-${openPanel}`);
-        if (prev) prev.classList.remove('open');
-    }
-
-    const isOpen = panel.classList.toggle('open');
-    openPanel = isOpen ? idx : null;
-    btn.textContent = isOpen ? '✖ داخستن' : '📅 مێژووی پارەدان';
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  POS CALCULATOR
-// ─────────────────────────────────────────────────────────────────────────────
-function openPOS() {
-    document.getElementById('posModal').classList.add('open');
-    document.getElementById('posMonthly').focus();
-}
-
-function closePOS() {
-    document.getElementById('posModal').classList.remove('open');
-}
-
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closePOS();
+const app = initializeApp(FB);
+const db = getFirestore(app);
+const persistenceReady = enableMultiTabIndexedDbPersistence(db).catch(err => {
+  console.warn('Offline cache is unavailable:', err && err.code ? err.code : err);
 });
 
-function calcPOS() {
-    const monthly = parseFloat(document.getElementById('posMonthly').value) || 0;
-    const months  = parseFloat(document.getElementById('posMonths').value)  || 0;
-    const cash    = parseFloat(document.getElementById('posCash').value)     || 0;
 
-    const total  = monthly * months;
-    const change = cash - total;
+// ---------- App state ----------
+let allHouses = [];    // normalized
+let filtered = [];
+// Keep the public list stable and easy to scan: complex, then house number ascending.
+let houseNumSortOrder = 'asc';
+let housesUnsubscribe = null;
+let dashboardStarted = false;
+let latestSnapshotMetadata = { fromCache: false, hasPendingWrites: false };
+let activePOSHouse = null;
+let selectedPOSMonthKeys = new Set();
+const DASHBOARD_SESSION_KEY = 'nuenaran-dashboard-session';
 
-    const totalEl  = document.getElementById('posTotal');
-    const changeEl = document.getElementById('changeAmount');
-    const noteEl   = document.getElementById('changeNote');
-    const display  = document.getElementById('changeDisplay');
+// DOM refs
+const loginInput = document.getElementById('passwordInput');
+const mainHeader = document.getElementById('mainHeader');
+const loadingBar = document.getElementById('loadingBar');
+const mainContent = document.getElementById('mainContent');
+const statTotal = document.getElementById('statTotal');
+const statSheets = document.getElementById('statSheets');
+const statOwners = document.getElementById('statOwners');
+const statRenters = document.getElementById('statRenters');
 
-    // Format total
-    totalEl.textContent = total > 0 ? fmtIQD(total) + ' IQD' : '—';
+const searchBox = document.getElementById('searchBox');
+const complexFilter = document.getElementById('complexFilter');
+const statusFilter = document.getElementById('statusFilter');
+const debtFilter = document.getElementById('debtFilter');
+const tableBody = document.getElementById('tableBody');
+const emptyState = document.getElementById('emptyState');
+const resultCount = document.getElementById('resultCount');
+const connectionStatus = document.getElementById('connectionStatus');
 
-    // Format change
-    if (cash === 0 && total === 0) {
-        changeEl.textContent = '—';
-        noteEl.textContent   = '';
-        display.className    = 'change-display';
-        return;
+// ---------- Helpers ----------
+const esc = escapeHTML;
+function fmt(n){ return Math.round(n).toLocaleString('en-US'); }
+const normalizeStatus = statusKind;
+function statusBadge(h){
+  if (isShopComplex(h.complex)) return '<span class="badge" style="background:#f1f5f9;color:#64748b">—</span>';
+  const lbl = h.normStatus==='owner' ? 'خاوەن مولک' : h.normStatus==='renter' ? 'کرێچی' : 'نەدیار';
+  if (h.normStatus==='owner') return `<span class="badge status-owner">${lbl}</span>`;
+  if (h.normStatus==='renter') return `<span class="badge status-renter">${lbl}</span>`;
+  return `<span class="badge" style="background:#f1f5f9;color:#64748b">${lbl}</span>`;
+}
+function displayHouseId(h){
+  const house = h?.houseNum !== undefined && h?.houseNum !== null ? String(h.houseNum) : '—';
+  return h?.block ? `${house} · ${h.block}` : house;
+}
+function anyFilterActive(){ return (searchBox.value || '').trim() !== '' || (complexFilter.value || '') !== '' || (statusFilter.value || '') !== '' || (debtFilter.value || '') !== ''; }
+
+// Safely read array-like notes
+function normalizeNotes(n){ if (!n) return []; if (Array.isArray(n)) return n.map(x=>String(x)); return [String(n)]; }
+
+// Company service-fee rules. These rules take priority over an old saved monthlyRent value.
+const debtMonthEntries = monthEntries;
+const visibleDebtMonths = house => dueEntries(house).length;
+const visibleUnpaidMonths = dueEntries;
+const payableInvoiceMonthEntries = house => paymentOptions(house, document.getElementById('posAdvance').checked ? document.getElementById('posYear').value : null);
+function receiptDateInBaghdad(now = new Date()){
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Baghdad', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(now);
+  const value = type => parts.find(part => part.type === type)?.value || '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+function receiptMonthLabel(monthKey){
+  const match = String(monthKey || '').match(/^(\d{4})[-/](\d{1,2})/);
+  if (!match) return String(monthKey || '—');
+  const year = match[1];
+  const month = String(Number(match[2])).padStart(2, '0');
+  return `${year}-${month}`;
+}
+// Display-only history; never changes payable months or payment totals.
+function showPaymentHistory(element, house) {
+  if (element._historyReady && element._historySource === house?.skippedMonths) return;
+  element._historyReady = true; element._historySource = house?.skippedMonths;
+  const entries = skippedEntries(house), ranges = [];
+  for (const entry of entries) {
+    const serial = entry.year * 12 + entry.month;
+    const last = ranges[ranges.length - 1];
+    if (last && serial === last.serial + 1) {
+      last.end = entry.key; last.serial = serial;
+    } else ranges.push({start: entry.key, end: entry.key, serial});
+  }
+  element.hidden = entries.length === 0;
+  element.textContent = entries.length
+    ? 'زانیاریی پێشوو — قەرز نییە\n' +
+      entries.length + ' مانگی پێشوو تێپەڕێنراون؛ لە کۆی قەرز و وەسلدا ناژمێردرێن.\n' +
+      ranges.map(range => range.start === range.end ? range.start : range.start + ' → ' + range.end).join('، ')
+    : '';
+}
+// Keep month buttons mounted while selecting or entering cash (no grid rebuild).
+function renderMonthPicker(root, entries, selected, attribute, onToggle) {
+  const signature = entries.map(e=>e.key+(e.advance?'a':'d')).join('|');
+  let view = root._monthView;
+  if (!view || view.signature !== signature) {
+    root.innerHTML = entries.map(e=>`<button type="button" ${attribute}="${e.key}" class="month-choice" aria-pressed="false"><span dir="ltr">${e.key}</span><span data-month-label>${e.advance?'پێشوەختە':'قەرز'}</span></button>`).join('') || '<p class="col-span-full">هیچ مانگێک نییە بۆ پارەدان.</p>';
+    view = root._monthView = {signature, buttons:[...root.querySelectorAll('button')], entries:new Map(entries.map(e=>[e.key,e]))};
+  }
+  view.toggle = onToggle;
+  if (!root._monthListener) {
+    root.addEventListener('click', event=>{
+      const button = event.target.closest('button');
+      if (!button || !root.contains(button)) return;
+      const key = button.getAttribute(attribute);
+      if (root._monthView.entries.has(key)) root._monthView.toggle(key);
+    });
+    root._monthListener = true;
+  }
+  for (const button of view.buttons) {
+    const key = button.getAttribute(attribute), entry = view.entries.get(key), chosen = selected.has(key);
+    const state = chosen ? 'selected' : entry.advance ? 'advance' : 'debt';
+    if (button.dataset.state === state) continue;
+    button.dataset.state = state;
+    button.setAttribute('aria-pressed', String(chosen));
+    button.querySelector('[data-month-label]').textContent = chosen ? 'هەڵبژێردراوە ✓' : entry.advance ? 'پێشوەختە' : 'قەرز';
+  }
+}
+function preparePaymentYear(select) {
+  const year = Number(baghdadDate().slice(0,4));
+  select.innerHTML = [year,year+1].map(y=>`<option value="${y}">${y}</option>`).join('');
+  select.value = String(year);
+}
+function updatePOSInvoiceMonths(){
+  document.getElementById('posYear').disabled = !document.getElementById('posAdvance').checked;
+  showPaymentHistory(document.getElementById('posHistoryNote'), activePOSHouse);
+  const monthList = document.getElementById('posInvoiceMonths');
+  const monthNote = document.getElementById('posInvoiceMonthNote');
+  const availableMonths = payableInvoiceMonthEntries(activePOSHouse);
+  const allowedKeys = new Set(availableMonths.map(entry => entry.key));
+  selectedPOSMonthKeys = new Set([...selectedPOSMonthKeys].filter(key => allowedKeys.has(key)));
+
+  const selectedMonths = availableMonths.filter(entry => selectedPOSMonthKeys.has(entry.key));
+
+  if (!availableMonths.length) {
+    monthList._monthView = null;
+    monthList.innerHTML = '<span class="col-span-full rounded-lg bg-emerald-50 px-3 py-3 text-center text-sm font-bold text-emerald-700">هیچ مانگێکی پێشووی قەرزدار نییە</span>';
+    monthNote.textContent = 'بۆ ئەم خانووە هیچ مانگێکی پێشووی قەرزدار نییە بۆ نووسین لە وەسل.';
+    monthNote.className = 'mt-3 text-xs font-semibold text-emerald-700';
+    if (monthDataWarning(activePOSHouse)) {
+      monthList.textContent = 'بەرواری قەرزەکان تەواو نییە؛ پێویستی بە پشکنینە.';
+      monthNote.textContent = 'تا زانیارییەکان ڕاست نەکرێنەوە وەسل مەنووسە.';
     }
+    return [];
+  }
 
-    changeEl.textContent = fmtIQD(Math.abs(change)) + ' IQD';
+  renderMonthPicker(monthList, availableMonths, selectedPOSMonthKeys, 'data-pos-month', key=>{
+    if (selectedPOSMonthKeys.has(key)) selectedPOSMonthKeys.delete(key);
+    else selectedPOSMonthKeys.add(key);
+    calcPOS();
+  });
+  monthNote.textContent = selectedMonths.length
+    ? `${selectedMonths.length} مانگ هەڵبژێردراوە: ${selectedMonths.map(entry => entry.key).join('، ')}`
+    : 'یەک یان زیاتر مانگ هەڵبژێرە بۆ وەسل.';
+  monthNote.className = `mt-3 text-xs font-semibold ${selectedMonths.length ? 'text-blue-800' : 'text-amber-700'}`;
+  return selectedMonths;
+}
 
-    if (change > 0) {
-        noteEl.textContent   = 'گەڕاندنەوە بکە';
-        display.className    = 'change-display';              // blue — give change back
-    } else if (change === 0) {
-        noteEl.textContent   = '✓ تەواو — هیچ گەڕاندنەوەیەک نییە';
-        display.className    = 'change-display zero';         // green — exact
-    } else {
-        noteEl.textContent   = `کەمی ${fmtIQD(Math.abs(change))} IQD — پارە بەسەر نییە`;
-        display.className    = 'change-display negative';     // red — shortfall
+function updateConnectionStatus(metadata = latestSnapshotMetadata){
+  if (!dashboardStarted || !connectionStatus) return;
+  const fromCache = Boolean(metadata && metadata.fromCache);
+  const hasPendingWrites = Boolean(metadata && metadata.hasPendingWrites);
+  let message = '✓ ئۆنلاین — داتاکان نوێن';
+  let colors = 'bg-green-50 text-green-700 border border-green-200';
+
+  if (!navigator.onLine) {
+    message = hasPendingWrites
+      ? '⚠ ئۆفلاین — گۆڕانکارییەکان لەسەر ئامێرەکە پاشەکەوتکراون و کاتێک ئینتەرنێت بگەڕێتەوە سینک دەکرێن'
+      : '⚠ ئۆفلاین — داتاکانی پاشەکەوتکراوی ئەم ئامێرە نیشان دەدرێت';
+    colors = 'bg-amber-50 text-amber-800 border border-amber-200';
+  } else if (hasPendingWrites || fromCache) {
+    message = hasPendingWrites
+      ? '↻ گۆڕانکارییەکان چاوەڕێی سینککردنن'
+      : '↻ داتا نوێ دەکرێتەوە';
+    colors = 'bg-blue-50 text-blue-800 border border-blue-200';
+  }
+
+  connectionStatus.className = `connection-status max-w-[98%] mx-auto mt-3 px-4 py-2 rounded-lg text-xs font-semibold ${colors}`;
+  connectionStatus.textContent = message;
+}
+
+function setDashboardSession(active){
+  try {
+    if (active) sessionStorage.setItem(DASHBOARD_SESSION_KEY, '1');
+    else sessionStorage.removeItem(DASHBOARD_SESSION_KEY);
+  } catch (err) {
+    console.warn('Session storage is unavailable:', err);
+  }
+}
+
+function hasDashboardSession(){
+  try { return sessionStorage.getItem(DASHBOARD_SESSION_KEY) === '1'; }
+  catch { return false; }
+}
+
+function startDashboard(){
+  if (dashboardStarted) return;
+  dashboardStarted = true;
+  document.getElementById('loginScreen').classList.add('hidden');
+  mainHeader.classList.remove('hidden');
+  const t = new Date();
+  document.getElementById('dateChip').textContent =
+    `${String(t.getDate()).padStart(2,'0')}/${String(t.getMonth()+1).padStart(2,'0')}/${t.getFullYear()}`;
+  updateConnectionStatus();
+  loadData();
+}
+
+// ---------- Firestore data loader ----------
+async function loadData() {
+  try {
+    loadingBar.classList.remove('hidden');
+    await persistenceReady;
+    if (housesUnsubscribe) housesUnsubscribe();
+    housesUnsubscribe = onSnapshot(collection(db,'houses'), { includeMetadataChanges: true }, (snap) => {
+      latestSnapshotMetadata = snap.metadata;
+      allHouses = snap.docs.map(d => {
+        const data = d.data() || {};
+        const houseNum = data.houseNumber ?? data.houseNum ?? data.houseNumStr ?? data['house num'] ?? (data.house && data.house.number) ?? '';
+        const tenantName = data.residentName ?? data.tenantName ?? data.renterName ?? data.ownerName ?? data.name ?? '';
+        const phone = data.mobile ?? data.renterPhone ?? data.ownerPhone ?? data.phone ?? '';
+        const nationality = data.nationality ?? data.nat ?? data.ethnicity ?? '';
+        const rawUnpaidMonths = data.unpaidMonths && typeof data.unpaidMonths === 'object' ? data.unpaidMonths : {};
+        const rawPaidMonths = data.paidMonths && typeof data.paidMonths === 'object' ? data.paidMonths : {};
+        const parsedPaid = Number(data.totalPaid ?? data.paid ?? debtMonthEntries(rawPaidMonths).length);
+        const parsedUnpaid = Number(data.totalUnpaid ?? data.unpaid ?? data.debtMonths ?? debtMonthEntries(rawUnpaidMonths).length);
+        const status = data.status ?? data.occupancyType ?? '';
+        return {
+          id: d.id,
+          raw: data,
+          complex: data.complex ?? data.complexName ?? '',
+          houseNum: houseNum !== null && houseNum !== undefined ? String(houseNum) : '',
+          tenantName,
+          phone,
+          nationality,
+          occupancyType: data.occupancyType ?? '',
+          profession: data.profession ?? '',
+          tenantStatus: data.tenantStatus ?? '',
+          ownerName: data.ownerName ?? data.landlordName ?? data['ناوی خاووەن خانوو'] ?? data['ناوی خاوەن خانوو'] ?? '',
+          renterName: data.renterName ?? '',
+          renterPhone: data.renterPhone ?? data.tenantPhone ?? data['كرێجى'] ?? data['کرێچی'] ?? data['کرێجی'] ?? data['كرجي'] ?? data['كرجى'] ?? '',
+          ownerPhone: data.ownerPhone ?? data.landlordPhone ?? data['خاوەن مولک'] ?? data['خاوەن موڵک'] ?? data['خاون مولک'] ?? data['صاحب'] ?? data['صاحبی'] ?? '',
+          ownerPropertyType: data.ownerPropertyType ?? '',
+          block: data.block ?? data.blockCode ?? data.blockName ?? '',
+          homeType: data.homeType ?? data.unitType ?? '',
+          sourceExtra: data.sourceExtra ?? data.sourceColumn1 ?? '',
+          monthlyRent: Number(data.monthlyRent ?? data.rentPerMonth) || 0,
+          darab: String(data.darab ?? data.derab ?? data.darb ?? data['دەراب'] ?? '').trim(),
+          apartmentType: String(data.apartmentType ?? data.qandilType ?? data.houseType ?? data.unitType ?? ''),
+          apartmentMetre: String(data.apartmentMetre ?? data.qandilMetre ?? data.metre ?? ''),
+          totalPaid: Number.isFinite(parsedPaid) ? parsedPaid : 0,
+          totalUnpaid: Number.isFinite(parsedUnpaid) ? parsedUnpaid : 0,
+          notes: normalizeNotes(data.notes ?? data.note ?? data.notesArray),
+          status,
+          normStatus: normalizeStatus(status),
+          paidMonths: rawPaidMonths,
+          skippedMonths: data.skippedMonths || {},
+          unpaidMonths: rawUnpaidMonths
+        };
+      });
+
+      if (activePOSHouse) {
+        activePOSHouse = allHouses.find(h=>h.id === activePOSHouse.id) || null;
+        if (activePOSHouse) { document.getElementById('posMonthly').value = serviceFeeForHouse(activePOSHouse).amount || ''; calcPOS(); }
+        else window.closePOS();
+      }
+      populateComplexFilter();
+      updateStats();
+      applyFilters();
+      loadingBar.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+      updateConnectionStatus(snap.metadata);
+    }, (err) => {
+      console.error('loadData error:', err);
+      if (!navigator.onLine) updateConnectionStatus({ fromCache: true, hasPendingWrites: false });
+      else showLoadError(err);
+    });
+  } catch (err) {
+    console.error('loadData error:', err);
+    showLoadError(err);
+  }
+}
+function showLoadError(err){
+  allHouses = []; filtered = [];
+  window.closePOS();
+  mainContent.classList.add('hidden');
+  loadingBar.classList.remove('hidden');
+  loadingBar.innerHTML = '<p class="text-red-600 p-4 font-bold text-sm">داتا بارنەکرا. تکایە دووبارە هەوڵ بدەرەوە.</p>';
+  const retry = document.createElement('button');
+  retry.textContent = 'هەوڵدانەوە';
+  retry.className = 'rounded-lg bg-blue-700 text-white px-4 py-2';
+  retry.addEventListener('click', loadData);
+  loadingBar.appendChild(retry);
+}
+
+// ---------- Password gate ----------
+window.checkPassword = function() {
+  const pass = (document.getElementById('passwordInput').value || '').trim();
+  if (pass === 'nuenaran.497') {
+    setDashboardSession(true);
+    startDashboard();
+  } else {
+    document.getElementById('loginError').classList.remove('hidden');
+  }
+};
+window.logoutDashboard = function(){
+  setDashboardSession(false);
+  if (housesUnsubscribe) housesUnsubscribe();
+  window.location.reload();
+};
+window.addEventListener('DOMContentLoaded', () => {
+  const pi = document.getElementById('passwordInput');
+  if (pi) pi.addEventListener('keypress', e => { if (e.key === 'Enter') window.checkPassword(); });
+  if (hasDashboardSession()) startDashboard();
+});
+window.addEventListener('online', () => updateConnectionStatus());
+window.addEventListener('offline', () => updateConnectionStatus());
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost','127.0.0.1'].includes(location.hostname))) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { scope: './' })
+    .catch(err => console.warn('Offline app cache could not start:', err)));
+}
+// populate complex select
+function populateComplexFilter(){
+  try {
+    const uniques = [...new Set(allHouses.map(h=>h.complex).filter(Boolean))].sort();
+    const selectedComplex = complexFilter.value;
+    complexFilter.innerHTML = '<option value="">هەموو کۆمپلێکسەکان</option>';
+    uniques.forEach(u=>{
+      const o = document.createElement('option'); o.value=u; o.textContent=u; complexFilter.appendChild(o);
+    });
+    complexFilter.value = uniques.includes(selectedComplex) ? selectedComplex : '';
+  } catch(e) { console.error('populateComplexFilter error', e); }
+}
+
+// update stats
+function updateStats(){
+  const owners = allHouses.filter(h=>h.normStatus==='owner').length;
+  const renters = allHouses.filter(h=>h.normStatus==='renter').length;
+  statTotal.textContent = allHouses.length.toLocaleString();
+  statSheets.textContent = [...new Set(allHouses.map(h=>h.complex).filter(Boolean))].length;
+  statOwners.textContent = owners.toLocaleString();
+  statRenters.textContent = renters.toLocaleString();
+}
+
+// ---------- SEARCH (STRICT) ----------
+function applyFilters(){
+  try {
+    const q = searchText(searchBox.value);
+    const cx = (complexFilter.value || '').trim();
+    const st = (statusFilter.value || '').trim();
+    const debt = parseInt(debtFilter.value) || 0;
+
+    filtered = allHouses.filter(h => {
+      if (cx && h.complex !== cx) return false;
+      if (st && h.normStatus !== st) return false;
+      if (debt && visibleDebtMonths(h) < debt) return false;
+      if (q) {
+        // Search the visible identity and contact fields as well as the exact unit.
+        const tenant = searchText(h.tenantName);
+        const houseNum = searchText(h.houseNum);
+        const block = searchText(h.block);
+        const owner = searchText(h.ownerName), renterPhone = searchText(h.renterPhone), ownerPhone = searchText(h.ownerPhone), profession = searchText(h.profession);
+        if (!(tenant.includes(q) || houseNum.includes(q) || block.includes(q) || owner.includes(q) || renterPhone.includes(q) || ownerPhone.includes(q) || profession.includes(q))) return false;
+      }
+      return true;
+    });
+
+    render();
+  } catch (e) {
+    console.error('applyFilters error', e);
+  }
+}
+
+// debounce helper
+function debounce(fn, wait=120){
+  let t;
+  return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), wait); };
+}
+
+// attach listeners safely
+if (!document._listenersAdded) {
+  searchBox.addEventListener('input', debounce(applyFilters, 120));
+  complexFilter.addEventListener('change', applyFilters);
+  statusFilter.addEventListener('change', applyFilters);
+  debtFilter.addEventListener('change', applyFilters);
+  document._listenersAdded = true;
+}
+
+// ---------- SORT ----------
+window.toggleSortHouseNum = function toggleSortHouseNum(){
+  if (houseNumSortOrder === null) houseNumSortOrder = 'asc';
+  else if (houseNumSortOrder === 'asc') houseNumSortOrder = 'desc';
+  else houseNumSortOrder = null;
+  render();
+}
+function getSortedList(list){
+  if (!houseNumSortOrder) return list;
+  const s = [...list].sort((a,b)=>{
+    return compareHouses(a,b);
+  });
+  return houseNumSortOrder === 'asc' ? s : s.reverse();
+}
+
+// ---------- RENDER (fixed blank table issues) ----------
+function render(){
+  try {
+    let list = anyFilterActive() ? filtered : allHouses;
+    list = getSortedList(list);
+
+    resultCount.textContent = list.length.toLocaleString();
+
+    tableBody.innerHTML = '';
+    if (!list || list.length === 0) {
+      emptyState.classList.remove('hidden');
+      return;
     }
+    emptyState.classList.add('hidden');
+
+    const frag = document.createDocumentFragment();
+
+    list.forEach((h, idx) => {
+      // defensive values
+      const complex = h.complex || '—';
+      const houseNum = h.houseNum !== undefined && h.houseNum !== null ? String(h.houseNum) : '—';
+      const houseLabel = displayHouseId(h);
+      const tenantName = h.tenantName || '—';
+      const phone = h.phone || '—';
+      const unpaid = visibleDebtMonths(h);
+      const paid = paidEntries(h).length;
+      const settled=settledEntries(h).length;
+      const pct = (settled + unpaid) > 0 ? Math.round((settled / (settled + unpaid)) * 100) : 0;
+      const debtClr = unpaid >= 6 ? 'text-red-600' : unpaid >= 3 ? 'text-orange-500' : 'text-green-600';
+      const serviceFee = serviceFeeForHouse(h);
+      const serviceFeeCell = serviceFee.amount
+        ? `<div class="text-xs font-mono font-bold text-slate-700" dir="ltr">${fmt(serviceFee.amount)} IQD</div>${serviceFee.qandil ? `<div class="text-sm text-indigo-700">${esc(serviceFee.qandil.type+' · '+serviceFee.qandil.metre)}</div>` : ''}`
+        : `<span class="text-[11px] font-bold text-amber-700">${esc(missingServiceFeeLabel(serviceFee))}</span>`;
+
+      const tr = document.createElement('tr');
+      tr.className = 'main-row';
+
+      tr.innerHTML = `
+        <td class="text-gray-400 text-xs text-center">${idx+1}</td>
+        <td><span class="complex-tag">${esc(complex)}</span></td>
+        <td class="font-semibold text-center text-sm">${esc(houseLabel)}</td>
+        <td class="text-sm">${esc(tenantName)}</td>
+        <td class="text-sm">${esc(h.ownerName || '—')}</td>
+        <td>${statusBadge(h)}</td>
+        <td class="text-xs text-gray-500 font-mono" dir="ltr">${esc(h.renterPhone || '—')}</td>
+        <td class="text-xs text-gray-500 font-mono" dir="ltr">${esc(h.ownerPhone || '—')}</td>
+        <td class="text-center">${serviceFeeCell}</td>
+        <td class="text-center">
+          <div class="flex items-center justify-center gap-1.5 flex-wrap">
+            <div class="text-xs text-right leading-tight">
+              <span class="text-green-600 font-bold block">${paid} ✓</span>
+              <span class="${debtClr} font-bold block">${unpaid} ✗</span>
+            </div>
+            <button class="view-btn text-xs bg-amber-500 hover:bg-amber-400 text-white px-2 py-1.5 rounded-lg font-semibold transition" data-id="${esc(h.id)}">بینین</button>
+            <button data-action="pos" data-id="${esc(h.id)}" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1.5 rounded-lg font-semibold transition">💵 پارەدان</button>
+            <button data-action="detail" data-id="${esc(h.id)}" class="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2 py-1.5 rounded-lg font-semibold transition">وردەکاری ▼</button>
+          </div>
+          <div class="w-full mt-1.5 h-1.5 bg-red-100 rounded-full overflow-hidden">
+            <div class="h-full bg-green-500 rounded-full" style="width:${pct}%"></div>
+          </div>
+        </td>
+      `;
+
+      frag.appendChild(tr);
+
+      // detail row
+      const dr = document.createElement('tr');
+      dr.id = `detail-${h.id}`;
+      dr.className = 'detail-row';
+      dr.dataset.loaded = '0';
+      frag.appendChild(dr);
+    });
+
+    tableBody.appendChild(frag);
+    tableBody.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
+      if (button.dataset.action === 'pos') window.openPOSById(button.dataset.id);
+      else window.toggleDetail(button.dataset.id, button);
+    }));
+
+    // attach view button listeners (delegated would be fine as well)
+    tableBody.querySelectorAll('.view-btn').forEach(btn => {
+      btn.addEventListener('click', (ev) => {
+        const id = btn.getAttribute('data-id');
+        openInfoModalById(id);
+      });
+    });
+  } catch (err) {
+    console.error('render error:', err);
+  }
 }
 
-function fmtIQD(n) {
-    return Math.round(n).toLocaleString('en-US');
+function houseDetailHTML(h) {
+  const paid=paidEntries(h).length, unpaid=visibleDebtMonths(h), serviceFee=serviceFeeForHouse(h);
+  return `<td colspan="8" class="p-4 bg-slate-50 border-b-2 border-blue-100">
+        <div class="grid md:grid-cols-2 gap-3">
+          <div class="bg-white rounded-lg p-3 border border-green-200">
+            <h4 class="text-green-700 font-bold text-xs mb-2 flex justify-between">
+              <span>✅ مانگەکانی دراوە</span><span>${paid} مانگ</span>
+            </h4>
+            <div class="text-[0.68rem] font-mono text-gray-600 max-h-36 overflow-y-auto" dir="rtl">
+              ${formatMonths(paidEntries(h))}
+            </div>
+          </div>
+          <div class="bg-white rounded-lg p-3 border border-red-200">
+            <h4 class="text-red-700 font-bold text-xs mb-2 flex justify-between">
+              <span>❌ مانگە قەرزدارەکان</span><span>${unpaid} مانگ</span>
+            </h4>
+            <div class="text-[0.68rem] font-mono text-gray-600 max-h-36 overflow-y-auto" dir="rtl">
+              ${formatMonths(visibleUnpaidMonths(h))}
+              ${monthDataWarning(h) ? '<p class="text-amber-700">بەرواری قەرزەکان تەواو نییە؛ پێویستی بە پشکنینە.</p>' : ''}
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 rounded-lg border ${serviceFee.amount ? 'border-indigo-200 bg-indigo-50' : 'border-amber-200 bg-amber-50'} p-3 text-xs">
+          <span class="font-bold ${serviceFee.amount ? 'text-indigo-800' : 'text-amber-800'}">پارەی خزمەتگوزاری مانگانە:</span>
+          <span class="font-mono font-bold mr-1" dir="ltr">${serviceFee.amount ? `${fmt(serviceFee.amount)} IQD` : '—'}</span>
+          <span class="text-[11px] text-slate-500 mr-1">${esc(serviceFee.rule)}</span>
+        </div>
+        ${h.notes && h.notes.length ? `<div class="mt-3 bg-yellow-50 rounded-lg p-3 border border-yellow-200">
+            <h4 class="text-yellow-800 font-bold text-xs mb-2">📝 تێبینییەکان</h4>
+            <div class="text-[0.68rem] font-mono text-yellow-900 max-h-24 overflow-y-auto" dir="rtl">
+              ${h.notes.map(n => `<div class="mb-1">${esc(n)}</div>`).join('')}
+            </div>
+          </div>` : ''}
+      </td>`;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-function cleanStr(v) {
-    if (v === null || v === undefined) return '';
-    return String(v).replace(/\s+/g,' ').trim();
+// Toggle detail (keeps compatibility)
+window.toggleDetail = function(id, btn) {
+  const row = document.getElementById(`detail-${id}`);
+  if (!row) return;
+  if (row.dataset.loaded !== '1') {
+    const house = allHouses.find(h=>h.id===id);
+    if (!house) return;
+    row.innerHTML = houseDetailHTML(house);
+    row.dataset.loaded = '1';
+  }
+  const open = row.classList.toggle('open');
+  btn.textContent = open ? 'داخستن ▲' : 'وردەکاری ▼';
+};
+
+// Open POS by id (finds index)
+window.openPOSById = function openPOSById(id) {
+  const house = allHouses.find(h => h.id === id);
+  if (!house) return alert('خانوو نەدۆزرایەوە');
+  activePOSHouse = house;
+  document.getElementById('posAdvance').checked = false;
+  preparePaymentYear(document.getElementById('posYear'));
+  selectedPOSMonthKeys = new Set(dueEntries(house).slice(0,1).map(e => e.key));
+  const serviceFee = serviceFeeForHouse(house);
+  document.getElementById('posInvoiceDate').textContent = receiptDateInBaghdad();
+  document.getElementById('posInvoiceName').textContent = house.tenantName || house.ownerName || '—';
+  document.getElementById('posInvoiceHouse').textContent = house.houseNum || '—';
+  document.getElementById('posInvoiceComplex').textContent = house.complex || '—';
+  const blockWrap = document.getElementById('posInvoiceBlockWrap');
+  const blockValue = String(house.block || '').trim();
+  document.getElementById('posInvoiceBlock').textContent = blockValue || '—';
+  blockWrap.classList.toggle('hidden', !blockValue);
+  const monthlyInput = document.getElementById('posMonthly');
+  const rateHelp = document.getElementById('posRateHelp');
+  monthlyInput.value = serviceFee.amount || '';
+  monthlyInput.readOnly = true; // POS and Admin must use the same recorded service price.
+  monthlyInput.classList.toggle('bg-slate-100', monthlyInput.readOnly);
+  monthlyInput.classList.toggle('text-slate-600', monthlyInput.readOnly);
+  monthlyInput.classList.toggle('bg-amber-50', Boolean(serviceFee.needsDarab || serviceFee.needsApartmentType));
+  monthlyInput.classList.toggle('text-amber-800', Boolean(serviceFee.needsDarab || serviceFee.needsApartmentType));
+  rateHelp.className = `mt-1 text-[11px] ${serviceFee.automatic ? 'text-emerald-700' : serviceFee.needsDarab || serviceFee.needsApartmentType ? 'text-amber-700' : 'text-slate-500'}`;
+  rateHelp.textContent = serviceFee.automatic
+    ? serviceFee.rule
+    : serviceFee.needsDarab
+      ? 'بۆ دووكان، دەراب ١ تا ٤ پێویستە. لە بەشی ئەدمین زیاد بکە.'
+      : serviceFee.needsApartmentType
+        ? 'بۆ قندیل، جۆری شوقە پێویستە بۆ قندیل.'
+      : 'نرخی دەستی (دەستکاریکراو) / تۆمارکراو.';
+  document.getElementById('posCash').value = '';
+  calcPOS();
+  document.getElementById('posModal').classList.add('open');
+}
+window.closePOS = () => { activePOSHouse = null; selectedPOSMonthKeys.clear(); document.getElementById('posModal').classList.remove('open'); };
+
+window.selectAllPOSMonths = function selectAllPOSMonths(){
+  selectedPOSMonthKeys = new Set(payableInvoiceMonthEntries(activePOSHouse).map(entry => entry.key));
+  calcPOS();
+};
+window.selectOldestPOSMonth = function selectOldestPOSMonth(){
+  const oldest = payableInvoiceMonthEntries(activePOSHouse)[0];
+  selectedPOSMonthKeys = new Set(oldest ? [oldest.key] : []);
+  calcPOS();
+};
+window.selectPOSYear = function(){
+  const year = document.getElementById('posYear').value;
+  selectedPOSMonthKeys = new Set(payableInvoiceMonthEntries(activePOSHouse).filter(e=>String(e.year)===year).map(e=>e.key));
+  calcPOS();
+};
+window.setPOSCash = function setPOSCash(amount){
+  document.getElementById('posCash').value = String(Math.max(0, Number(amount) || 0));
+  calcPOS();
+};
+window.usePOSTotal = function usePOSTotal(){
+  const selected = updatePOSInvoiceMonths();
+  const fee = parseIQDInput(document.getElementById('posMonthly').value);
+  document.getElementById('posCash').value = selected.length && fee ? String(selected.length * fee) : '';
+  calcPOS();
+};
+const parseIQDInput = parseIQD;
+
+// POS calc
+window.calcPOS = function calcPOS(){
+  const monthly = parseIQDInput(document.getElementById('posMonthly').value);
+  const selectedMonths = updatePOSInvoiceMonths();
+  const months = selectedMonths.length;
+  const cashInput = document.getElementById('posCash');
+  const hasCash = String(cashInput.value || '').trim() !== '';
+  const cash = parseIQDInput(cashInput.value);
+  const total = monthly * months;
+  const change = cash - total;
+  document.getElementById('posDueTotal').textContent = total > 0 ? fmt(total) + ' IQD' : '—';
+  document.getElementById('posSelectedSummary').textContent = months
+    ? `${months} مانگ · ${selectedMonths.map(entry => entry.key).join('، ')}`
+    : 'هیچ مانگێک هەڵنەبژێردراوە';
+  const amt = document.getElementById('changeAmt');
+  const note = document.getElementById('changeNote');
+  const title = document.getElementById('changeTitle');
+  const box = document.getElementById('changeBox');
+  if (!monthly || (hasCash && cash === null)) {
+    title.textContent = 'پێویستی بە پشکنینە';
+    amt.textContent = '—';
+    note.textContent = !monthly ? 'نرخی دروستی خزمەتگوزاری پێویستە.' : 'بڕێکی دروست بنووسە، وەک 100,000.';
+    box.className = 'change-box negative flex flex-col justify-center';
+    return;
+  }
+  if (!months) {
+    title.textContent = 'پارەی گەڕاندنەوە';
+    amt.textContent = '—';
+    note.textContent = 'یەک یان زیاتر مانگی قەرزدار هەڵبژێرە.';
+    box.className = 'change-box neutral flex flex-col justify-center';
+    return;
+  }
+  if (!hasCash) {
+    title.textContent = 'پارەی گەڕاندنەوە';
+    amt.textContent = '—';
+    note.textContent = 'پارەی وەرگیراو لە کڕیار بنووسە.';
+    box.className = 'change-box neutral flex flex-col justify-center';
+    return;
+  }
+  amt.textContent = fmt(Math.abs(change)) + ' IQD';
+  if (change > 0) {
+    title.textContent = 'پارەی گەڕاندنەوە';
+    note.textContent = 'ئەم بڕە بە کڕیار بگەڕێنەوە.';
+    box.className = 'change-box positive flex flex-col justify-center';
+  } else if (change === 0) {
+    title.textContent = 'پارەی گەڕاندنەوە';
+    note.textContent = '✓ بڕی تەواو وەرگیرا.';
+    box.className = 'change-box exact flex flex-col justify-center';
+  } else {
+    title.textContent = 'ماوە بۆ پارەدان';
+    note.textContent = 'کڕیار پێویستە ئەم بڕەیەی ماوە بدات.';
+    box.className = 'change-box negative flex flex-col justify-center';
+  }
 }
 
-function esc(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ---------- Info Modal (full info) ----------
+const infoModalHtml = `
+  <div class="modal-bg" id="infoModalRoot" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:60">
+    <div class="modal-box" style="width:min(1120px,100%);max-width:1120px">
+      <div class="flex justify-between items-center px-4 py-3 border-b">
+        <h3 class="font-bold text-lg">وردەکاری خانوو</h3>
+        <button id="infoCloseBtn" class="text-slate-600 hover:text-slate-900">✕</button>
+      </div>
+      <div class="p-4 space-y-3 text-sm">
+        <div><strong>کۆمپلێکس:</strong> <span id="infoComplex">—</span></div>
+        <div><strong>ژمارەی خانوو:</strong> <span id="infoHouseNum">—</span></div>
+        <div><strong>ناوی دانیشتوو:</strong> <span id="infoTenant">—</span></div>
+        <div><strong>خاوەن:</strong> <span id="infoOccupancyType">—</span></div>
+        <div><strong>تەلەفۆن:</strong> <span id="infoPhone">—</span></div>
+        <div id="infoRenterPhoneRow" hidden><strong>تەلەفۆنی کرێچی (كرێجى):</strong> <span id="infoRenterPhone">—</span></div>
+        <div id="infoOwnerPhoneRow" hidden><strong>تەلەفۆنی خاوەن مولک:</strong> <span id="infoOwnerPhone">—</span></div>
+        <div><strong>نەتەوە:</strong> <span id="infoNationality">—</span></div>
+        <div><strong>پیشە:</strong> <span id="infoProfession">—</span></div>
+        <div><strong>ناوی خاووەن خانوو:</strong> <span id="infoOwnerName">—</span></div>
+        <div id="infoBlockRow" hidden><strong>بلۆک:</strong> <span id="infoBlock">—</span></div>
+        <div id="infoHomeTypeRow" hidden><strong>جۆری یەکە:</strong> <span id="infoHomeType">—</span></div>
+        <div id="infoDarabRow" hidden><strong>دەراب:</strong> <span id="infoDarab">—</span></div>
+        <div id="infoApartmentTypeRow" hidden><strong>جۆری شوقە:</strong> <span id="infoApartmentType">—</span></div>
+        <div id="infoApartmentMetreRow" hidden><strong>ڕووبەر:</strong> <span id="infoApartmentMetre">—</span></div>
+        <div id="infoSourceExtraRow" hidden><strong>زانیاری زیادە:</strong> <span id="infoSourceExtra">—</span></div>
+        <div><strong>پارەی خزمەتگوزاری مانگانە:</strong> <span id="infoServiceFee">—</span></div>
+        <div><strong>کۆی مانگە قەرزدارەکان:</strong> <span id="infoDebt">0</span></div>
+        <p class="text-[11px] text-indigo-600">مانگی ئێستا تا سەرەتای مانگی داهاتوو قەرز حساب ناکرێت.</p>
+        <aside id="infoHistoryNote" class="history-note" hidden></aside>
+        <div><strong>تێبینی:</strong>
+          <div id="infoNotes" class="mt-1 p-2 bg-slate-50 rounded text-xs text-slate-700 max-h-40 overflow-auto">—</div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 px-4 py-3 border-t">
+        <button id="infoCloseFooter" class="px-4 py-2 bg-gray-100 rounded hover:bg-gray-200">داخستن</button>
+      </div>
+    </div>
+  </div>
+`;
+// append modal root to body (once)
+document.body.insertAdjacentHTML('beforeend', infoModalHtml);
+const infoModalRoot = document.getElementById('infoModalRoot');
+const infoCloseBtn = document.getElementById('infoCloseBtn');
+const infoCloseFooter = document.getElementById('infoCloseFooter');
+infoCloseBtn?.addEventListener('click', ()=> infoModalRoot.style.display='none');
+infoCloseFooter?.addEventListener('click', ()=> infoModalRoot.style.display='none');
+infoModalRoot?.addEventListener('click', (e)=> { if (e.target === infoModalRoot) infoModalRoot.style.display='none'; });
+
+function openInfoModalById(id){
+  try {
+    const h = allHouses.find(x => x.id === id);
+    if (!h) { console.warn('openInfoModalById: house not found', id); return; }
+    const setOptionalInfo = (rowId, valueId, value) => {
+      const row = document.getElementById(rowId);
+      const target = document.getElementById(valueId);
+      const text = String(value ?? '').trim();
+      if (target) target.textContent = text || '—';
+      if (row) row.hidden = !text;
+    };
+    document.getElementById('infoComplex').textContent = h.complex || '—';
+    document.getElementById('infoHouseNum').textContent = displayHouseId(h);
+    document.getElementById('infoTenant').textContent = h.tenantName || '—';
+    document.getElementById('infoOccupancyType').textContent = statusKind(h.occupancyType)==='owner' ? 'خاوەن مولک' : statusKind(h.occupancyType)==='renter' ? 'کرێچی' : 'نەدیار';
+    document.getElementById('infoPhone').textContent = h.phone || '—';
+    document.getElementById('infoNationality').textContent = h.nationality || '—';
+    document.getElementById('infoProfession').textContent = h.profession || '—';
+    document.getElementById('infoOwnerName').textContent = h.ownerName || '—';
+    setOptionalInfo('infoRenterPhoneRow', 'infoRenterPhone', h.renterPhone);
+    setOptionalInfo('infoOwnerPhoneRow', 'infoOwnerPhone', h.ownerPhone);
+    setOptionalInfo('infoBlockRow', 'infoBlock', h.block);
+    setOptionalInfo('infoHomeTypeRow', 'infoHomeType', h.homeType);
+    setOptionalInfo('infoDarabRow', 'infoDarab', h.darab);
+    setOptionalInfo('infoApartmentTypeRow', 'infoApartmentType', h.apartmentType);
+    setOptionalInfo('infoApartmentMetreRow', 'infoApartmentMetre', h.apartmentMetre);
+    setOptionalInfo('infoSourceExtraRow', 'infoSourceExtra', h.sourceExtra);
+    const serviceFee = serviceFeeForHouse(h);
+    document.getElementById('infoServiceFee').textContent = serviceFee.amount
+      ? `${fmt(serviceFee.amount)} IQD — ${serviceFee.rule}`
+      : `نرخ دیاری نەکراوە — ${missingServiceFeeLabel(serviceFee)}`;
+    document.getElementById('infoDebt').textContent = String(visibleDebtMonths(h));
+    showPaymentHistory(document.getElementById('infoHistoryNote'), h);
+    const notesEl = document.getElementById('infoNotes');
+    if (!h.notes || h.notes.length === 0) notesEl.innerHTML = '<span class="text-slate-400">—</span>';
+    else notesEl.innerHTML = h.notes.map(n => `<div class="mb-1 whitespace-pre-wrap">${esc(n)}</div>`).join('');
+    infoModalRoot.style.display = 'flex';
+  } catch (err) {
+    console.error('openInfoModalById error', err);
+  }
 }
 
-function normalizeStatus(s) {
-    if (!s) return 'unknown';
-    const l = s.toLowerCase();
-    if (l.includes('مولك') || l.includes('مولک') || l.includes('موللک')) return 'owner';
-    if (l.includes('كریچی') || l.includes('كريجى') || l.includes('كريَجى') || l.includes('كريچى')) return 'renter';
-    return 'other';
+// ---------- utility to format months (safe) ----------
+function formatMonths(obj){
+  if (!obj) return '<span style="color:#9ca3af">هیچ نییە</span>';
+  try {
+    const entries = Array.isArray(obj) && obj.every(item => item && item.key)
+      ? obj
+      : debtMonthEntries(obj);
+    if (!entries.length) return '<span style="color:#9ca3af">هیچ نییە</span>';
+    return entries.map(entry => `<span class="inline-block rounded bg-slate-100 px-1.5 py-0.5 ml-1 mb-1" dir="ltr">${esc(entry.key)}</span>`).join('');
+  } catch(e){
+    console.error('formatMonths error', e);
+    return '<span style="color:#9ca3af">—</span>';
+  }
 }
 
-function statusBadge(status) {
-    const n = normalizeStatus(status);
-    const label = esc(status) || 'نەزانراو';
-    if (n === 'owner')  return `<span class="badge status-paid">${label}</span>`;
-    if (n === 'renter') return `<span class="badge status-unpaid">${label}</span>`;
-    return `<span class="badge bg-gray-100 text-gray-600">${label}</span>`;
-}
+// ---------- initial helpers ----------
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.getElementById('posModal').classList.remove('open'); infoModalRoot.style.display='none'; } });
 
-function anyFilterActive() {
-    return document.getElementById('searchBox').value.trim() !== ''
-        || document.getElementById('complexFilter').value !== ''
-        || document.getElementById('statusFilter').value !== '';
-}
+// ensure render called at least once (safe)
+window.render = render;
+let lastBillingDate = baghdadDate();
+setInterval(() => {
+  const today = baghdadDate();
+  if (today !== lastBillingDate) {
+    lastBillingDate = today;
+    document.getElementById('dateChip').textContent = today;
+    if (dashboardStarted) applyFilters();
+    if (activePOSHouse) { document.getElementById('posInvoiceDate').textContent = today; calcPOS(); }
+  }
+}, 30000);
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  BOOT
-// ─────────────────────────────────────────────────────────────────────────────
-filtered = allHouses.slice();
-window.addEventListener('DOMContentLoaded', loadExcelData);
+window.nuenaranLoginReady?.();
 </script>
 </body>
 </html>

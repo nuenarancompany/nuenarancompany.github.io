@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'none'; form-action 'self'">
+  <meta name="theme-color" content="#071b2d">
+  <title>CEO — کۆمپانیای نوینەران</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap');
+    :root { color-scheme: light; }
+    body { font-family: 'Noto Sans Arabic', 'Segoe UI', sans-serif; }
+    .executive-card { background: linear-gradient(145deg, #ffffff, #f8fafc); border: 1px solid #e2e8f0; border-radius: 18px; box-shadow: 0 7px 24px rgba(15, 23, 42, .06); }
+    .metric-card { min-height: 132px; padding: 18px; }
+    .metric-value { font-size: clamp(1.15rem, 2vw, 1.7rem); font-weight: 800; line-height: 1.25; letter-spacing: -.02em; word-break: break-word; }
+    .metric-label { color: #475569; font-size: .78rem; font-weight: 800; margin-top: 7px; }
+    .metric-hint { color: #94a3b8; font-size: .67rem; margin-top: 4px; line-height: 1.55; }
+    .panel-title { color: #172033; font-size: .9rem; font-weight: 800; }
+    .panel-subtitle { color: #64748b; font-size: .68rem; margin-top: 4px; }
+    .analytics-table { width: 100%; min-width: 780px; border-collapse: collapse; }
+    .analytics-table th { background: #f8fafc; color: #475569; font-size: .68rem; font-weight: 800; padding: 11px 10px; text-align: right; white-space: nowrap; }
+    .analytics-table td { border-top: 1px solid #f1f5f9; color: #334155; font-size: .73rem; padding: 11px 10px; vertical-align: middle; }
+    .analytics-table tbody tr:hover td { background: #fafcff; }
+    .progress-track { background: #e2e8f0; border-radius: 999px; height: 8px; overflow: hidden; }
+    .progress-fill { border-radius: inherit; height: 100%; min-width: 0; transition: width .25s ease; }
+    .trend-bars { align-items: end; display: flex; direction: ltr; gap: 10px; min-height: 190px; padding-top: 16px; }
+    .trend-item { flex: 1; min-width: 40px; text-align: center; }
+    .trend-amount { color: #475569; direction: rtl; font-size: .6rem; min-height: 25px; white-space: nowrap; }
+    .trend-wrap { align-items: end; display: flex; height: 125px; justify-content: center; }
+    .trend-bar { background: linear-gradient(180deg, #22c55e, #047857); border-radius: 8px 8px 2px 2px; min-height: 4px; transition: height .25s ease; width: min(34px, 82%); }
+    .trend-label { color: #64748b; font-size: .62rem; margin-top: 7px; }
+    .rate-guide-card { border: 1px solid #e2e8f0; border-radius: 13px; padding: 12px; background: #fbfdff; }
+    .rate-guide-card h4 { color: #334155; font-size: .74rem; font-weight: 800; }
+    .rate-guide-card p { color: #64748b; font-size: .63rem; line-height: 1.65; margin-top: 4px; }
+    .rate-guide-card .amount { color: #0f766e; direction: ltr; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .7rem; font-weight: 800; margin-top: 6px; text-align: right; }
+    .connection-pill { align-items: center; border-radius: 999px; display: inline-flex; font-size: .68rem; font-weight: 700; gap: 6px; padding: 5px 9px; }
+    .skeleton { animation: pulse 1.5s ease-in-out infinite; background: #e2e8f0; border-radius: 8px; }
+    @keyframes pulse { 50% { opacity: .48; } }
+    @media print {
+      #ceoHeader, #ceoLoginScreen, #connectionStatus { display: none !important; }
+      body { background: #fff !important; }
+      .executive-card { box-shadow: none; break-inside: avoid; }
+    }
+  
+#ceoContent { max-width:1680px; }
+#dashboard .kpi-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.metric-card { display:flex; flex-direction:column; justify-content:center; min-height:150px; padding:24px; border-top:5px solid #4f46e5; background:#eef2ff; }
+.metric-card:nth-child(2) { border-color:#0d9488; background:#f0fdfa; }
+.metric-card:nth-child(3) { border-color:#e11d48; background:#fff1f2; }
+.metric-card:nth-child(4) { border-color:#059669; background:#ecfdf5; }
+.metric-card:nth-child(5) { border-color:#ea580c; background:#fff7ed; }
+.metric-card:nth-child(6) { border-color:#7c3aed; background:#f5f3ff; }
+.metric-label { order:-1; color:#334155; font-size:1rem; margin:0 0 12px; }
+.metric-value { direction:ltr; text-align:right; font-size:clamp(1.3rem,2vw,1.85rem); letter-spacing:0; font-variant-numeric:tabular-nums; line-height:1.5; }
+.metric-hint { font-size:.875rem; color:#475569; }
+.panel-title { font-size:1.125rem; }
+.panel-subtitle, .analytics-table th, .analytics-table td { font-size:.875rem; }
+#dashboard .text-xs, #dashboard [class*="text-["], .rate-guide-card p, .rate-guide-card .amount, .rate-guide-card h4 { font-size:.875rem; }
+#dashboard .truncate { white-space:normal; overflow-wrap:anywhere; }
+#dashboard .analytics-table th { background:#e0e7ff; color:#312e81; }
+#dashboard .analytics-table td { padding:16px 12px; }
+#statusStats, #nationalityStats, #riskStats { margin-top:20px; }
+.trend-amount, .trend-label { font-size:.875rem; }
+.trend-bars { min-width:450px; }
+#paymentTrend { overflow-x:auto; }
+@media(max-width:1000px) { #dashboard .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:600px) { #dashboard .kpi-grid { grid-template-columns:1fr; } .metric-card { min-height:120px; padding:18px; } }
+</style>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800">
+
+<!-- CEO ACCESS GATE -->
+<div id="ceoLoginScreen" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950 p-4">
+  <div class="w-full max-w-sm rounded-3xl border border-slate-700 bg-slate-900 p-8 text-center shadow-2xl">
+    <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-2xl shadow-lg shadow-emerald-950/40">◈</div>
+    <span class="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-extrabold tracking-[.16em] text-emerald-300" dir="ltr">CEO ONLY</span>
+    <h1 class="mt-4 text-lg font-extrabold text-white">پانێلی بەڕێوەبەری سەرەکی</h1>
+    <p class="mt-2 text-xs leading-6 text-slate-400">ئەم پەڕەیە تایبەتە بە زانیارییە بەڕێوەبەرایەتییەکان.</p>
+    <input id="ceoPassInput" type="password" autocomplete="current-password" dir="ltr" placeholder="••••••••••••"
+      class="mt-6 w-full rounded-xl border border-slate-600 bg-slate-800 p-3 text-center font-mono text-lg tracking-widest text-white outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10">
+    <p id="ceoLoginError" class="mt-3 hidden text-xs font-bold text-rose-400">کۆدی چوونەژوورەوە هەڵەیە.</p>
+    <button id="ceoLoginButton" onclick="checkCEOAccess()" class="mt-4 w-full rounded-xl bg-emerald-600 py-3 text-sm font-extrabold text-white transition hover:bg-emerald-500 disabled:cursor-wait disabled:opacity-70">چوونە ژوورەوە</button>
+    <a href="index.html" class="mt-4 block text-xs text-slate-500 transition hover:text-slate-300">← بگەڕێوە بۆ داشبۆرد</a>
+  </div>
+</div>
+
+<!-- CEO HEADER -->
+<header id="ceoHeader" class="sticky top-0 z-40 hidden border-b border-slate-800 bg-slate-950 text-white shadow-xl">
+  <div class="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+    <div class="flex min-w-0 items-center gap-3">
+      <span class="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-extrabold tracking-wide" dir="ltr">CEO</span>
+      <div class="min-w-0">
+        <h1 class="truncate text-sm font-extrabold">نوینەران · پانێلی بەڕێوەبەری سەرەکی</h1>
+        <p id="ceoDate" class="mt-0.5 text-[11px] text-slate-400">—</p>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <span id="connectionStatus" class="connection-pill bg-slate-800 text-slate-300">● چاوەڕێی داتا</span>
+      <a href="admin.html" class="rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 transition hover:bg-slate-700">پانێلی ئەدمین</a>
+      <button onclick="logoutCEO()" class="rounded-lg bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 transition hover:bg-slate-700">دەرچوون</button>
+    </div>
+  </div>
+</header>
+
+<main id="ceoContent" class="mx-auto hidden max-w-[1500px] px-4 py-6">
+  <section class="mb-5 overflow-hidden rounded-3xl bg-gradient-to-l from-emerald-800 via-teal-800 to-slate-900 p-5 text-white shadow-lg sm:p-7">
+    <div class="flex flex-wrap items-start justify-between gap-5">
+      <div>
+        <div class="text-[11px] font-bold tracking-wide text-emerald-200">پێداچوونەوەی تایبەتی بەڕێوەبەرایەتی</div>
+        <h2 class="mt-2 text-xl font-extrabold sm:text-2xl">دۆخی کۆی خزمەتگوزاری و پارەوەرگرتن</h2>
+        <p class="mt-2 max-w-2xl text-xs leading-6 text-slate-200">ئامارەکان تەنها بۆ پێداچوونەوەن؛ لێرە هیچ گۆڕانکارییەک ناکرێت. قەرزی مانگی ئێستا تا سەرەتای مانگی داهاتوو حساب ناکرێت.</p>
+      </div>
+      <div class="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-left backdrop-blur-sm" dir="ltr">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Last refresh</div>
+        <div id="lastUpdated" class="mt-1 text-sm font-bold text-white">—</div>
+      </div>
+    </div>
+  </section>
+
+
+  <div id="loadingState" class="executive-card mb-5 flex items-center gap-4 p-5">
+    <div class="skeleton h-10 w-10 rounded-xl"></div>
+    <div class="flex-1 space-y-2"><div class="skeleton h-3 w-44"></div><div class="skeleton h-2.5 w-64 max-w-full"></div></div>
+  </div>
+
+  <section id="dashboard" class="hidden">
+    <div class="mb-5 rounded-xl border border-teal-200 bg-teal-50 p-4 text-teal-900">
+      قەرزی CEO: مانگە نەدراوەکانی پێش دوا مانگی پارەدراو لە قەرز کەم دەکرێنەوە.
+      <div id="ceoDebtReconciliation" class="mt-2" dir="auto"></div>
+      <div id="ceoNoPaymentSummary" class="mt-2"></div>
+    </div>
+    <div class="mb-5 kpi-grid">
+      <div class="executive-card metric-card"><div id="kpiTotal" class="metric-value text-slate-900">0</div><div class="metric-label">کۆی خانووکان</div></div>
+      <div class="executive-card metric-card"><div id="kpiPotential" class="metric-value text-teal-700">0 IQD</div><div class="metric-label">خزمەتگوزاریی یەک مانگ</div><div class="metric-hint">خەمڵاندن؛ نەک پارەی وەرگیراو</div></div>
+      <div class="executive-card metric-card"><div id="kpiSkippedValue" class="metric-value text-rose-600">0 IQD</div><div class="metric-label">حسابکردنی ئەو مانگانەی کە تێپەڕدراون</div><div class="metric-hint">بڕی خەمڵێنراوی مانگە تێپەڕدراوەکان بە نرخی ئێستا</div></div>
+      <div class="executive-card metric-card"><div id="kpiCollection" class="metric-value text-emerald-700">0%</div><div class="metric-label">ڕێژەی پارەدانی مانگە پێشووەکان</div><div class="metric-hint">پارەدانی پێشوەختە تێدا نییە</div></div>
+      <div class="executive-card metric-card"><div id="kpiCritical" class="metric-value text-orange-600">0</div><div class="metric-label">قەرزداران: ٦ مانگ یان زیاتر</div></div>
+      <div class="executive-card metric-card"><div id="kpiCoverage" class="metric-value text-indigo-700">0%</div><div class="metric-label">تۆمارەکانی نرخی دیاریکراو</div></div>
+    </div>
+
+    <section class="executive-card mb-5 p-5" aria-label="وردەکاری مانگەکان">
+      <div class="flex gap-3 flex-wrap mb-4">
+        <button id="ceoNonSkippable" type="button" aria-pressed="true" class="rounded-lg border px-4 py-3 font-bold">بە بێ حسابکردنی ئەو مانگانەی کە تێپەڕنەدراون</button>
+        <button id="ceoSkippable" type="button" aria-pressed="false" class="rounded-lg border px-4 py-3 font-bold">حسابکردنی ئەو مانگانەی کە تێپەڕدراون</button>
+      </div>
+      <p id="ceoMonthExplanation" class="mb-3 text-slate-600"></p>
+      <div class="flex gap-3 flex-wrap mb-3">
+        <input id="ceoMonthSearch" type="search" placeholder="گەڕان — ناو، کۆمپلێکس، خانوو" class="rounded-lg border p-3 flex-1 min-w-0">
+        <select id="ceoMonthComplex" aria-label="کۆمپلێکس" class="rounded-lg border p-3"><option value="">هەموو کۆمپلێکسەکان</option></select>
+        <input id="ceoMonthHouse" type="search" aria-label="ژمارەی خانوو" placeholder="ژمارەی خانوو" class="rounded-lg border p-3 w-36">
+        <select id="ceoMonthSort" aria-label="ڕیزکردن" class="rounded-lg border p-3">
+          <option value="houseAsc">ژمارەی خانوو: بچووک بۆ گەورە</option>
+          <option value="houseDesc">ژمارەی خانوو: گەورە بۆ بچووک</option>
+          <option value="amountDesc">بڕ: زۆر بۆ کەم</option>
+          <option value="amountAsc">بڕ: کەم بۆ زۆر</option>
+        </select>
+        <strong id="ceoMonthTotals" class="p-3"></strong>
+      </div>
+      <div class="overflow-x-auto"><table class="analytics-table"><thead><tr><th>کۆمپلێکس</th><th>خانوو</th><th>ناوی دانیشتوو</th><th>مانگ</th><th>بڕی خەمڵێنراو</th><th>وردەکاری مانگەکان</th></tr></thead><tbody id="ceoMonthRows"></tbody></table></div>
+      <div class="flex items-center gap-3 mt-4"><button id="ceoMonthPrev" type="button" class="rounded-lg border px-4 py-2">پێشوو</button><span id="ceoMonthPage"></span><button id="ceoMonthNext" type="button" class="rounded-lg border px-4 py-2">دواتر</button></div>
+    </section>
+    <p id="skippedSummary" class="mb-4 rounded-lg bg-slate-100 p-3 text-sm text-slate-700"></p>
+    <p id="advanceSummary" class="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-800"></p>
+    <div id="executiveAlerts" class="mb-5 grid gap-3 md:grid-cols-3"></div>
+
+    <div class="mb-5 grid gap-4 xl:grid-cols-3">
+      <section class="executive-card overflow-hidden xl:col-span-2">
+        <div class="border-b border-slate-100 px-5 py-4">
+          <h3 class="panel-title">کارایی هەر کۆمپلێکس</h3>
+          <p class="panel-subtitle">ئامارەی مانگانە، پارەوەرگرتن و کۆی قەرزی هەر کۆمپلێکس</p>
+        </div>
+        <div class="overflow-x-auto"><table class="analytics-table"><thead><tr><th>کۆمپلێکس</th><th>ژمارەی خانوو</th><th>خزمەتگوزاریی یەک مانگ</th><th>ڕێژەی پارەدان</th><th>مانگی قەرز</th><th>کۆی قەرز</th></tr></thead><tbody id="complexPerformance"></tbody></table></div>
+      </section>
+      <section class="executive-card p-5">
+        <h3 class="panel-title">ئاستی مەترسی</h3>
+        <p class="panel-subtitle mb-5">بەپێی ژمارەی مانگە قەرزدارەکان</p>
+        <div id="riskStats"></div>
+      </section>
+    </div>
+
+    <div class="mb-5">
+      <section class="executive-card overflow-hidden p-5">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div><h3 class="panel-title">نوێترین پارەدانەکان</h3><p class="panel-subtitle">ئەو پارەدانانەی ئەدمین تازە تۆماریکردوون</p></div>
+          <span class="rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700">١٢ی دوا</span>
+        </div>
+        <div id="recentPayments" class="mt-3 overflow-x-auto"></div>
+      </section>
+    </div>
+
+    <div class="mb-5 grid gap-4 xl:grid-cols-3">
+      <section class="executive-card p-5 xl:col-span-2">
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div><h3 class="panel-title">چالاکیی پارەدان</h3><p id="paymentTrendNote" class="panel-subtitle">٦ مانگی ڕابردوو</p></div>
+          <span id="paymentTrendTotal" class="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">0 IQD</span>
+        </div>
+        <div id="paymentTrend" class="mt-2"></div>
+      </section>
+      <section class="executive-card p-5">
+        <h3 class="panel-title">وردەکاری</h3>
+        <p class="panel-subtitle mb-5">پشکنینی داتا بۆ بڕیاردان</p>
+        <div id="dataQualityStats"></div>
+      </section>
+    </div>
+
+    <div class="mb-5 grid gap-4 xl:grid-cols-3">
+      <section class="executive-card p-5">
+        <h3 class="panel-title">زۆرترین قەرزداران</h3>
+        
+        <div id="topDebtors" class="space-y-2"></div>
+      </section>
+      <section class="executive-card p-5">
+        <h3 class="panel-title">دابەشبوونی جۆری سکونی</h3>
+        
+        <div id="statusStats"></div>
+      </section>
+      <section class="executive-card p-5">
+        <h3 class="panel-title">دابەشبوونی نەتەوەیی</h3>
+        
+        <div id="nationalityStats" class="space-y-3"></div>
+      </section>
+    </div>
+
+    <section class="executive-card mb-5 p-5">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div><h3 class="panel-title">ڕێنمایی نرخەکانی خزمەتگوزاری</h3><p class="panel-subtitle">نرخی هەر شوێن خۆکار بەپێی کۆمپلێکس، ژمارەی خانوو، دەراب، یان جۆری شوقە حساب دەکرێت.</p></div>
+        <span id="rateGuideNote" class="rounded-lg bg-amber-50 px-2.5 py-1.5 text-[10px] font-bold text-amber-700"></span>
+      </div>
+      <div id="serviceRateRules" class="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"></div>
+    </section>
+  </section>
+</main>
+
+<script id="login-load-guard">
+(() => {
+  const input = document.getElementById('ceoPassInput');
+  const error = document.getElementById('ceoLoginError');
+  const button = input.parentElement.querySelector('button[onclick="checkCEOAccess()"]');
+  if (!button) return;
+  const label = button.textContent;
+  const originalError = error.textContent;
+  button.disabled = true;
+  button.textContent = 'چاوەڕێ بکە…';
+  let ready = false;
+  let retry;
+  function failed() {
+    if (ready) return;
+    error.textContent = 'پەڕە تەواو بارنەبوو. ئینتەرنێت بپشکنە و دووبارە هەوڵ بدەرەوە.';
+    error.classList.remove('hidden');
+    if (!retry) {
+      retry = document.createElement('button');
+      retry.type = 'button';
+      retry.textContent = 'هەوڵدانەوە';
+      retry.className = 'block w-full rounded-lg bg-slate-200 text-slate-900 p-3 mt-3';
+      retry.addEventListener('click', () => location.reload());
+      button.after(retry);
+    }
+  }
+  const timer = setTimeout(failed, 12000);
+  window.nuenaranLoginReady = () => {
+    ready = true;
+    clearTimeout(timer);
+    button.disabled = false;
+    button.textContent = label;
+    error.textContent = originalError;
+    error.classList.add('hidden');
+    retry?.remove();
+    if (document.getElementById('ceoLoginScreen').classList.contains('hidden')) return;
+    input.focus();
+  };
+  window.addEventListener('error', event => {
+    if (event.target?.id === 'pageApp') failed();
+  }, true);
+})();
+</script>
+<script type="module" id="pageApp">
+// Embedded business.js: this page also works without separate local module files.
+const __local_business_js = (() => {
+// Shared accounting rules. Skips are explicit records, never inferred after a new payment.
+function normalizeText(value) {
+  return String(value ?? '').normalize('NFKC').replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/ك/g,'ک').replace(/[ىي]/g,'ی')
+    .replace(/[\u200c\u200d\u200e\u200f\u202a-\u202e\u2066-\u2069]/g,'').trim();
+}
+const searchText = value => normalizeText(value).replace(/\s+/g,'').toLowerCase();
+const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function monthNumber(value) {
+  const text = normalizeText(value);
+  return /^\d{1,2}$/.test(text) && +text >= 1 && +text <= 12 ? +text : null;
+}
+function parseMonthKey(value) {
+  const match = normalizeText(value).match(/^(\d{4})[-/](\d{1,2})$/);
+  if (!match || !monthNumber(match[2]) || +match[1] < 1900 || +match[1] > 2200) return null;
+  const year = +match[1], month = +match[2];
+  return { key: `${year}-${String(month).padStart(2,'0')}`, year, month };
+}
+function monthEntries(map) {
+  const result = new Map();
+  const add = value => { const entry = parseMonthKey(value); if(entry) result.set(entry.key, entry); };
+  if (Array.isArray(map)) map.forEach(value => add(value?.key ?? value));
+  else if (map && typeof map === 'object') Object.entries(map).forEach(([key,value]) => {
+    if (parseMonthKey(key)) { add(key); return; }
+    const year = normalizeText(key);
+    if (!/^\d{4}$/.test(year)) return;
+    const months = Array.isArray(value) ? value : value && typeof value === 'object' ? Object.keys(value) : [value];
+    months.forEach(month => { if (monthNumber(month)) add(`${year}-${monthNumber(month)}`); });
+  });
+  return [...result.values()].sort((a,b)=>a.key.localeCompare(b.key));
+}
+function monthMap(entries) {
+  const map = {};
+  monthEntries(entries).forEach(({year,month}) => (map[year] ??= []).push(String(month)));
+  return map;
+}
+const billingDateFormatter = new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Baghdad',year:'numeric',month:'2-digit',day:'2-digit'});
+let dateSecond = null, dateValue = '';
+function baghdadDate(now = new Date()) {
+  const second = Math.floor(now.getTime() / 1000);
+  if (second === dateSecond) return dateValue;
+  const parts = billingDateFormatter.formatToParts(now);
+  const get = type => parts.find(p=>p.type===type).value;
+  dateSecond = second;
+  return dateValue = `${get('year')}-${get('month')}-${get('day')}`;
+}
+// Firestore snapshots replace these maps. Reuse derived dates until a map changes.
+const monthStateCache = new WeakMap();
+function monthState(house) {
+  if (!house || typeof house !== 'object') return {skipped:[],paid:[],unpaid:[]};
+  const previous = monthStateCache.get(house);
+  if (previous && previous.paidSource === house.paidMonths && previous.unpaidSource === house.unpaidMonths && previous.skippedSource === house.skippedMonths) return previous;
+  const skipped = monthEntries(house.skippedMonths);
+  const excluded = new Set(skipped.map(e=>e.key));
+  const paid = monthEntries(house.paidMonths).filter(e=>!excluded.has(e.key));
+  paid.forEach(e=>excluded.add(e.key));
+  const unpaid = monthEntries(house.unpaidMonths).filter(e=>!excluded.has(e.key));
+  const result = {skipped,paid,unpaid,paidSource:house.paidMonths,unpaidSource:house.unpaidMonths,skippedSource:house.skippedMonths};
+  monthStateCache.set(house,result);
+  return result;
+}
+function skippedEntries(house) { return monthState(house).skipped; }
+function paidEntries(house) { return monthState(house).paid; }
+function unpaidEntries(house) { return monthState(house).unpaid; }
+function dueEntries(house, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7), state = monthState(house);
+  if (state.duePeriod !== current) {
+    state.duePeriod = current;
+    state.due = state.unpaid.filter(e=>e.key < current);
+  }
+  return state.due;
+}
+function settledEntries(house, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7);
+  return paidEntries(house).filter(e=>e.key < current);
+}
+function paymentOptions(house, advanceYear = null, now = new Date()) {
+  const current = baghdadDate(now).slice(0,7);
+  const result = dueEntries(house,now).map(e=>({...e,advance:false}));
+  const year = Number(advanceYear);
+  if (!Number.isInteger(year) || year < Number(current.slice(0,4)) || year > 2200) return result;
+  const excluded = new Set([...paidEntries(house),...skippedEntries(house)].map(e=>e.key));
+  for (let month=1; month<=12; month++) {
+    const entry = parseMonthKey(year+'-'+month);
+    if (entry.key >= current && !excluded.has(entry.key)) result.push({...entry,advance:true});
+  }
+  return result.sort((a,b)=>a.key.localeCompare(b.key));
+}
+function monthDataWarning(house) {
+  const hasMissingDates = Number(house?.totalUnpaid) > 0 && !monthEntries(house?.unpaidMonths).length;
+  const rawPaidCount = Object.values(house?.paidMonths || {}).reduce((sum,v)=>sum+(Array.isArray(v)?v.length:0),0);
+  const duplicatePaid = rawPaidCount > monthEntries(house?.paidMonths).length;
+  const paid = new Set(monthEntries(house?.paidMonths).map(e=>e.key));
+  const overlap = monthEntries(house?.unpaidMonths).some(e=>paid.has(e.key));
+  return Boolean(house?.billingReview || hasMissingDates || duplicatePaid || overlap);
+}
+function parseIQD(value) {
+  const text = normalizeText(value).replace(/٬/g,',');
+  if (!/^(?:\d+|\d{1,3}(?:,\d{3})+)$/.test(text)) return null;
+  const amount = Number(text.replace(/,/g,''));
+  return Number.isSafeInteger(amount) && amount >= 0 && amount <= 1000000000 ? amount : null;
+}
+function statusKind(value) {
+  const text = searchText(value).replace(/ۆ/g,'و');
+  if (/^(کر[ێی][چج]ی?|کر[چج]ی|کرچی|کرێنشین|renter|tenant)$/.test(text)) return 'renter';
+  if (/^(مول+ک|ملک|مالک|خاوەن|خاوەنمولک|خاوەنخانوو|مومک|owner)$/.test(text)) return 'owner';
+  return 'other';
+}
+function compareHouses(a,b) {
+  return normalizeText(a.houseNum ?? a.houseNumber).localeCompare(normalizeText(b.houseNum ?? b.houseNumber),'en',{numeric:true,sensitivity:'base'})
+    || normalizeText(a.block).localeCompare(normalizeText(b.block),'en',{numeric:true}) || String(a.id??'').localeCompare(String(b.id??''));
+}
+function planPayment(house, selectedKeys, now = new Date(), {allowAdvance = false} = {}) {
+  const keys = [...new Set(selectedKeys)];
+  const due = new Set(dueEntries(house,now).map(e=>e.key));
+  const current = baghdadDate(now).slice(0,7);
+  const excluded = new Set([...paidEntries(house),...skippedEntries(house)].map(e=>e.key));
+  const eligible = key => due.has(key) || (allowAdvance && parseMonthKey(key)?.key === key && key >= current && !excluded.has(key));
+  if (!keys.length || keys.length !== selectedKeys.length || keys.some(k=>!eligible(k))) throw new Error('مانگەکان گۆڕاون، دراون یان تێپەڕێنراون. داتاکان نوێ بکەرەوە.');
+  const paid = [...paidEntries(house),...keys.map(parseMonthKey)];
+  const unpaid = unpaidEntries(house).filter(e=>!keys.includes(e.key));
+  return {paidMonths:monthMap(paid),unpaidMonths:monthMap(unpaid),totalPaid:paid.length,totalUnpaid:unpaid.length};
+}
+
+return { normalizeText, searchText, escapeHTML, monthNumber, parseMonthKey, monthEntries, monthMap, baghdadDate, skippedEntries, paidEntries, unpaidEntries, dueEntries, settledEntries, paymentOptions, monthDataWarning, parseIQD, statusKind, compareHouses, planPayment };
+})();
+
+// Embedded service-fees.js: this page also works without separate local module files.
+const __local_service_fees_js = (() => {
+const serviceDigitMap = { '٠':'0', '١':'1', '٢':'2', '٣':'3', '٤':'4', '٥':'5', '٦':'6', '٧':'7', '٨':'8', '٩':'9', '۰':'0', '۱':'1', '۲':'2', '۳':'3', '۴':'4', '۵':'5', '۶':'6', '۷':'7', '۸':'8', '۹':'9' };
+function normalizeServiceText(value){
+  return String(value ?? '')
+    .replace(/[٠-٩۰-۹]/g, digit => serviceDigitMap[digit] || digit)
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/[يى]/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/[ةۀ]/g, 'ە')
+    .replace(/ۆ/g, 'و')
+    .replace(/[\u200c\u200f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+function compactServiceText(value){
+  return normalizeServiceText(value).replace(/[()[\]{}]/g, '').replace(/[\s._\-–—]/g, '');
+}
+function isShopComplex(value){
+  return /دو+کان/.test(compactServiceText(value));
+}
+const qandilApartmentRates = {
+  A: { amount: 30000, metre: '125m²' },
+  B: { amount: 37000, metre: '150m²' },
+  D1: { amount: 20000, metre: '80m²' },
+  D2: { amount: 20000, metre: '80m²' },
+  C: { amount: 45000, metre: '200m²' },
+  CDP: { amount: 35000, metre: '100 Dublex' }
+};
+function qandilApartmentInfo(house = {}){
+  const candidates = [
+    house.qandilType, house.apartmentType, house.houseType, house.unitType,
+    house.houseNum, house.houseNumber, house.houseNumStr, house['house num']
+  ];
+  for (const candidate of candidates) {
+    const value = normalizeServiceText(candidate).toUpperCase().replace(/[\s()\-–—]/g, '');
+    const type = value.startsWith('CDP') ? 'CDP'
+      : value.startsWith('D1') ? 'D1'
+      : value.startsWith('D2') ? 'D2'
+      : value.startsWith('A') ? 'A'
+      : value.startsWith('B') ? 'B'
+      : value.startsWith('C') ? 'C'
+      : '';
+    if (type && qandilApartmentRates[type]) return { type, ...qandilApartmentRates[type] };
+  }
+  return null;
+}
+function missingServiceFeeLabel(fee){
+  if (fee.needsDarab) return 'دەراب پێویستە';
+  if (fee.needsApartmentType) return 'جۆری شوقە پێویستە بۆ قندیل';
+  return 'نرخ دیاری نەکراوە';
+}
+function serviceFeeForHouse(house = {}){
+  const complex = compactServiceText(house.complex ?? house.complexName);
+  const houseNumber = normalizeServiceText(house.houseNum ?? house.houseNumber ?? house.houseNumStr ?? house['house num']);
+  const darabValue = house.darab ?? house.derab ?? house.darb ?? house['دەراب'] ?? '';
+  const darab = Number(normalizeServiceText(darabValue));
+  const manualNumber = Number(house.monthlyRent ?? house.rentPerMonth);
+  const manualAmount = Number.isSafeInteger(manualNumber) && manualNumber > 0 && manualNumber <= 1000000000 ? manualNumber : 0;
+
+  if (['تەلارسیتی', 'تەلارستی'].includes(complex)) return { amount: 40000, automatic: true, rule: 'تەلار سیتی — 40,000 IQD' };
+  if (complex === 'مارینا1') return { amount: 55000, automatic: true, rule: 'مارینا (١) — 55,000 IQD' };
+  if (complex === 'مارینا2') return { amount: 53000, automatic: true, rule: 'مارینا (٢) — 53,000 IQD' };
+  if (complex === 'مارینا3') return { amount: 55000, automatic: true, rule: 'مارینا (٣) — 55,000 IQD' };
+  if (complex === 'مارینا4') {
+    const hasAB = /^(?:\d+\s*[ab]|[ab]\s*\d+)$/i.test(houseNumber);
+    return {
+      amount: hasAB ? 40000 : 55000,
+      automatic: true,
+      rule: hasAB ? 'مارینا (٤) — A/B: 40,000 IQD' : 'مارینا (٤) — بێ A/B: 55,000 IQD'
+    };
+  }
+  if (['شوقەکانتەلارسیتی', 'شوقەکانتەلارستی', 'شوقەکانیتەلارسیتی'].includes(complex)) return { amount: 25000, automatic: true, rule: 'شوقەکان تەلار سیتی — 25,000 IQD' };
+  if (complex === 'قندیل') {
+    const qandil = qandilApartmentInfo(house);
+    if (qandil) return {
+      amount: qandil.amount,
+      automatic: true,
+      qandil,
+      rule: `قندیل — ${qandil.type} · ${qandil.metre}: ${qandil.amount.toLocaleString('en-US')} IQD`
+    };
+    return {
+      amount: manualAmount,
+      automatic: false,
+      needsApartmentType: !manualAmount,
+      rule: manualAmount ? 'قندیل — نرخی تۆمارکراو' : 'قندیل — جۆری شوقە پێویستە بۆ قندیل'
+    };
+  }
+  if (isShopComplex(complex)) {
+    const shopRates = { 1: 15000, 2: 20000, 3: 25000, 4: 30000 };
+    if (shopRates[darab]) return { amount: shopRates[darab], automatic: true, rule: `دووكان — دەراب ${darab}: ${shopRates[darab].toLocaleString('en-US')} IQD` };
+    return { amount: 0, automatic: false, needsDarab: true, rule: 'دووكان — دەراب پێویستە' };
+  }
+  if (['دوبایسیتی', 'دوبەیستی', 'دوبەیسیتی'].includes(complex)) return { amount: 150000, automatic: true, rule: 'دوبەی ستی — 150,000 IQD' };
+  if (complex === 'پێشانگا') return { amount: 100000, automatic: true, rule: 'پێشانگا — 100,000 IQD' };
+  return { amount: manualAmount, automatic: false, rule: manualAmount ? 'نرخی دەستی (دەستکاریکراو) / تۆمارکراو' : 'نرخ دیاری نەکراوە' };
+}
+
+
+return { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmentInfo, missingServiceFeeLabel, serviceFeeForHouse };
+})();
+
+
+  const { settledEntries, normalizeText, escapeHTML, monthEntries, dueEntries, paidEntries, skippedEntries, monthDataWarning, statusKind, baghdadDate } = __local_business_js;
+  const { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmentInfo, missingServiceFeeLabel, serviceFeeForHouse } = __local_service_fees_js;
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getFirestore, collection, enableMultiTabIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  const FB = {
+    apiKey: "AIzaSyBe2dBVhBMFR7ZAR3Z26ZG0q8e2KQTHlII",
+    authDomain: "nuenaran.firebaseapp.com",
+    projectId: "nuenaran",
+    storageBucket: "nuenaran.firebasestorage.app",
+    messagingSenderId: "271798697223",
+    appId: "1:271798697223:web:8dade3ac017ce1a9c399a2"
+  };
+
+  const app = initializeApp(FB);
+  const db = getFirestore(app);
+  const persistenceReady = enableMultiTabIndexedDbPersistence(db).catch(error => {
+    console.warn('CEO offline cache is unavailable:', error && error.code ? error.code : error);
+  });
+
+  // UI-only static password gate. It does NOT protect Firebase data; real CEO-only protection requires Firebase rules and proper authentication.
+  const CEO_PASSWORD_HASH = '276d379920c3c795d778abe5741c54e97b239b041e9254a843a7263df9f80514';
+  const CEO_SESSION_KEY = 'nuenaran-ceo-session';
+  let allHouses = [];
+  let ceoStarted = false;
+  let housesUnsubscribe = null;
+  const esc = escapeHTML;
+  function numberOr(value, fallback = 0) { const n = Number(value); return Number.isFinite(n) ? n : fallback; }
+  function normalizeMonthMap(value) { return value && typeof value === 'object' && !Array.isArray(value) ? value : {}; }
+  function ceoSession(value) {
+    try {
+      if (value === undefined) return sessionStorage.getItem(CEO_SESSION_KEY) === 'active';
+      if (value) sessionStorage.setItem(CEO_SESSION_KEY,'active'); else sessionStorage.removeItem(CEO_SESSION_KEY);
+    } catch {}
+    return false;
+  }
+  function rentCalendarYearMonth(now = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Baghdad', year: 'numeric', month: '2-digit' }).formatToParts(now);
+    return { year: Number(parts.find(part => part.type === 'year').value), month: Number(parts.find(part => part.type === 'month').value) };
+  }
+
+  const debtMonthEntries = monthEntries;
+  // CEO-only reporting classification; the saved ledger and payment eligibility do not change.
+  const ceoMonthCache = new WeakMap();
+  function ceoMonthGroups(house, now = new Date()) {
+    const period=baghdadDate(now).slice(0,7);
+    const previous=ceoMonthCache.get(house);
+    if(previous && previous.period===period && previous.paidSource===house.paidMonths && previous.unpaidSource===house.unpaidMonths && previous.skippedSource===house.skippedMonths)return previous;
+    const due=dueEntries(house,now),last=paidEntries(house).at(-1)?.key;
+    const skippable=due.filter(e=>last && e.key<last);
+    const nonSkippable=due.filter(e=>!last || e.key>=last);
+    const explicit=skippedEntries(house).filter(e=>e.key<period);
+    const result={period,skippable,nonSkippable,explicit,paidSource:house.paidMonths,unpaidSource:house.unpaidMonths,skippedSource:house.skippedMonths};
+    ceoMonthCache.set(house,result);return result;
+  }
+  const visibleDebtMonths = house => ceoMonthGroups(house).nonSkippable.length;
+  let ceoMonthView='nonSkippable',ceoMonthPage=0;
+  function renderCEOMonths() {
+    const query=normalizeText(document.getElementById('ceoMonthSearch').value).toLowerCase();
+    const skippedView=ceoMonthView==='skippable';
+    const complex=document.getElementById('ceoMonthComplex').value;
+    const houseNumber=normalizeText(document.getElementById('ceoMonthHouse').value).toLowerCase().replace(/\s+/g,'');
+    const sortOrder=document.getElementById('ceoMonthSort').value||'houseAsc';
+    const natural=(a,b)=>normalizeText(a).localeCompare(normalizeText(b),'en',{numeric:true,sensitivity:'base'});
+    const houseKey=h=>normalizeText(h.houseNum).toUpperCase().replace(/^([AB])(\d+)$/,'$2$1');
+    const rows=allHouses.map(house=>{
+      const group=ceoMonthGroups(house);
+      const months=skippedView?monthEntries([...group.explicit,...group.skippable]):group.nonSkippable;
+      return {house,months,amount:months.length*houseFee(house).amount};
+    }).filter(r=>r.months.length && (!complex||r.house.complex===complex) && (!houseNumber||normalizeText(r.house.houseNum).toLowerCase().replace(/\s+/g,'')===houseNumber) && (!query || normalizeText([r.house.complex,r.house.houseNum,r.house.residentName].join(' ')).toLowerCase().includes(query)))
+      .sort((a,b)=>{
+        if(sortOrder.startsWith('amount'))return (sortOrder==='amountDesc'?-1:1)*(a.amount-b.amount)||natural(a.house.complex,b.house.complex)||natural(houseKey(a.house),houseKey(b.house));
+        return natural(a.house.complex,b.house.complex)||(sortOrder==='houseDesc'?-1:1)*(natural(houseKey(a.house),houseKey(b.house))||natural(a.house.block,b.house.block));
+      });
+    const pages=Math.max(1,Math.ceil(rows.length/25));ceoMonthPage=Math.min(ceoMonthPage,pages-1);
+    document.getElementById('ceoMonthExplanation').textContent=skippedView
+      ?'مانگە تێپەڕێنراوە تۆمارکراوەکان و مانگە نەدراوەکانی پێش دوا پارەدان؛ بڕەکە لە قەرزی CEO تێدا نییە.'
+      :'مانگە نەدراوەکانی دوای دوا پارەدان؛ ئەگەر هیچ پارەدانێک نییە هەموو مانگە نەدراوەکانی پێش مانگی ئێستا. ئەمانە قەرزی CEO پێکدەهێنن.';
+    document.getElementById('ceoMonthTotals').textContent=rows.length.toLocaleString()+' خانوو · '+rows.reduce((sum,r)=>sum+r.months.length,0).toLocaleString()+' مانگ · '+formatIQD(rows.reduce((sum,r)=>sum+r.amount,0));
+    document.getElementById('ceoMonthRows').innerHTML=rows.slice(ceoMonthPage*25,ceoMonthPage*25+25).map(({house,months,amount})=>`<tr><td>${esc(house.complex)}</td><td dir="ltr">${esc(house.houseNum)}</td><td>${esc(house.residentName||'—')}</td><td>${months.length}</td><td dir="ltr">${houseFee(house).amount?formatIQD(amount):'نرخ دیاری نەکراوە'}</td><td><details><summary class="cursor-pointer text-blue-700">مانگەکان</summary><div class="mt-2 max-h-48 overflow-y-auto" dir="ltr">${months.map(e=>esc(e.key)).join(' · ')}</div></details></td></tr>`).join('')||'<tr><td colspan="6">هیچ ئەنجامێک نییە</td></tr>';
+    document.getElementById('ceoMonthPage').textContent=(ceoMonthPage+1)+' / '+pages;
+    document.getElementById('ceoMonthPrev').disabled=ceoMonthPage===0;
+    document.getElementById('ceoMonthNext').disabled=ceoMonthPage>=pages-1;
+    for(const [id,active] of [['ceoSkippable',skippedView],['ceoNonSkippable',!skippedView]]) {
+      const button=document.getElementById(id);button.setAttribute('aria-pressed',String(active));
+      button.className='rounded-lg border px-4 py-3 font-bold '+(active?'bg-teal-700 text-white border-teal-700':'bg-white text-slate-700 border-slate-300');
+    }
+  }
+  document.getElementById('ceoSkippable').addEventListener('click',()=>{ceoMonthView='skippable';ceoMonthPage=0;renderCEOMonths();});
+  document.getElementById('ceoNonSkippable').addEventListener('click',()=>{ceoMonthView='nonSkippable';ceoMonthPage=0;renderCEOMonths();});
+  document.getElementById('ceoMonthSearch').addEventListener('input',()=>{ceoMonthPage=0;renderCEOMonths();});
+  for(const id of ['ceoMonthComplex','ceoMonthSort','ceoMonthHouse']) document.getElementById(id).addEventListener(id==='ceoMonthHouse'?'input':'change',()=>{ceoMonthPage=0;renderCEOMonths();});
+  document.getElementById('ceoMonthPrev').addEventListener('click',()=>{ceoMonthPage=Math.max(0,ceoMonthPage-1);renderCEOMonths();});
+  document.getElementById('ceoMonthNext').addEventListener('click',()=>{ceoMonthPage++;renderCEOMonths();});
+  function normalizeHouse(id, data) {
+    const paidMonths = normalizeMonthMap(data.paidMonths);
+    const unpaidMonths = normalizeMonthMap(data.unpaidMonths);
+    const houseNum = data.houseNum ?? data.houseNumber ?? data.houseNumStr ?? data['house num'] ?? '';
+    return {
+      ...data,
+      id,
+      houseNum: String(houseNum ?? ''),
+      complex: String(data.complex ?? data.complexName ?? ''),
+      residentName: String(data.residentName ?? data.tenantName ?? data.renterName ?? data.ownerName ?? data.name ?? ''),
+      mobile: String(data.mobile ?? data.renterPhone ?? data.ownerPhone ?? data.phone ?? ''),
+      renterPhone: String(data.renterPhone ?? ''),
+      ownerPhone: String(data.ownerPhone ?? ''),
+      block: String(data.block ?? data.blockCode ?? data.blockName ?? ''),
+      nationality: String(data.nationality ?? data.nat ?? data.ethnicity ?? ''),
+      occupancyType: String(data.occupancyType ?? data.status ?? ''),
+      paidMonths,
+      unpaidMonths,
+      totalPaid: paidEntries(data).length,
+      totalUnpaid: numberOr(data.totalUnpaid ?? data.unpaid ?? data.debtMonths, debtMonthEntries(unpaidMonths).length),
+      monthlyRent: numberOr(data.monthlyRent ?? data.rentPerMonth),
+      darab: String(data.darab ?? data.derab ?? data.darb ?? data['دەراب'] ?? ''),
+      payments: Array.isArray(data.payments) ? data.payments : []
+    };
+  }
+
+  const feeCache = new WeakMap();
+  function houseFee(house) {
+    if (!feeCache.has(house)) feeCache.set(house,serviceFeeForHouse(house));
+    return feeCache.get(house);
+  }
+  function houseDebtValue(house) { return visibleDebtMonths(house) * houseFee(house).amount; }
+  function formatIQD(value) { return `${Math.round(numberOr(value)).toLocaleString('en-US')} IQD`; }
+  function compactIQD(value) {
+    const amount = Math.round(numberOr(value));
+    if (amount >= 1000000) return `${(amount / 1000000).toFixed(amount >= 10000000 ? 0 : 1)}M`;
+    if (amount >= 1000) return `${(amount / 1000).toFixed(amount >= 100000 ? 0 : 1)}K`;
+    return amount.toLocaleString('en-US');
+  }
+  function percentage(numerator, denominator) { return denominator > 0 ? Math.round((numerator / denominator) * 100) : 0; }
+
+  function paymentEventDate(event) {
+    const value = event && event.createdAt;
+    if (!value) return null;
+    const date = typeof value.toDate === 'function' ? value.toDate() : value.seconds ? new Date(value.seconds * 1000) : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function dateKeyInBaghdad(date) {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Baghdad', year: 'numeric', month: 'numeric' }).formatToParts(date);
+    return `${parts.find(part => part.type === 'year').value}-${Number(parts.find(part => part.type === 'month').value)}`;
+  }
+
+  function monthsForTrend() {
+    const current = rentCalendarYearMonth();
+    const months = [];
+    for (let offset = 5; offset >= 0; offset -= 1) {
+      const date = new Date(Date.UTC(current.year, current.month - 1 - offset, 15));
+      const year = date.getUTCFullYear();
+      const month = date.getUTCMonth() + 1;
+      months.push({ key: `${year}-${month}`, date, amount: 0, count: 0 });
+    }
+    return months;
+  }
+
+  function statusName(value) { const kind = statusKind(value); return kind === 'owner' ? 'خاوەن مولک' : kind === 'renter' ? 'کرێچی' : 'نەدیار'; }
+
+  function progressRow(label, count, total, color, note = '') {
+    const pct = percentage(count, total);
+    return `<div class="mb-4 last:mb-0"><div class="mb-1 flex items-center justify-between gap-3 text-xs"><span class="font-bold text-slate-600">${esc(label)}</span><span class="font-mono text-slate-500" dir="ltr">${count.toLocaleString()} · ${pct}%</span></div><div class="progress-track"><div class="progress-fill ${color}" style="width:${pct}%"></div></div>${note ? `<div class="mt-1 text-[10px] text-slate-400">${esc(note)}</div>` : ''}</div>`;
+  }
+
+  function renderRateGuide(missingDarab, missingQandil) {
+    const cards = [
+      ['تەلار سیتی', '40,000 IQD', 'هەموو خانووەکان'],
+      ['مارینا (١)', '55,000 IQD', 'هەموو خانووەکان'],
+      ['مارینا (٢)', '53,000 IQD', 'هەموو خانووەکان'],
+      ['مارینا (٣)', '55,000 IQD', 'هەموو خانووەکان'],
+      ['مارینا (٤)', 'A / B: 40,000 · other: 55,000', 'ژمارەکانی وەکو 1A، 4A، 10B'],
+      ['دووكان', '1: 15K · 2: 20K · 3: 25K · 4: 30K', 'بەپێی دەراب'],
+      ['شوقەکان تەلار سیتی', '25,000 IQD', 'هەموو شوقەکان'],
+      ['دوبای سیتی', '150,000 IQD', 'هەموو تۆمارەکان'],
+      ['پێشانگا', '100,000 IQD', 'هەموو تۆمارەکان'],
+      ['قندیل', 'A: 30K · B: 37K · D1/D2: 20K · C: 45K · CDP: 35K', 'A 125m · B 150m · D1/D2 80m · C 200m · CDP 100 Dublex']
+    ];
+    document.getElementById('serviceRateRules').innerHTML = cards.map(([name, amount, note]) => `<div class="rate-guide-card"><h4>${esc(name)}</h4><div class="amount">${esc(amount)}</div><p>${esc(note)}</p></div>`).join('');
+    const issues = [];
+    if (missingDarab) issues.push(`${missingDarab} دووكان بێ دەراب`);
+    if (missingQandil) issues.push(`${missingQandil} قندیل بێ جۆر`);
+    document.getElementById('rateGuideNote').textContent = issues.length ? issues.join(' · ') : 'هەموو نرخە سەرەکییەکان دیاریکراون';
+  }
+
+  function renderDashboard() {
+    const complexSelect=document.getElementById('ceoMonthComplex'),selectedComplex=complexSelect.value;
+    const complexes=[...new Set(allHouses.map(h=>h.complex).filter(Boolean))].sort((a,b)=>normalizeText(a).localeCompare(normalizeText(b),'en',{numeric:true}));
+    complexSelect.innerHTML='<option value="">هەموو کۆمپلێکسەکان</option>'+complexes.map(name=>'<option value="'+esc(name)+'">'+esc(name)+'</option>').join('');
+    complexSelect.value=complexes.includes(selectedComplex)?selectedComplex:'';
+    const total = allHouses.length;
+    const reviewCount = allHouses.filter(monthDataWarning).length;
+    document.getElementById('skippedSummary').textContent = `${allHouses.reduce((sum,h)=>sum+skippedEntries(h).length,0)} مانگی پێشوو تێپەڕێنراوە — زانیاری تەنها؛ قەرز نییە.` + (reviewCount ? ` ⚠ ${reviewCount} تۆمار بەرواری دووبارە یان ناتەواوی هەیە؛ ئاماری مێژوویی پێویستی بە پشکنینە.` : '');
+    const currentPeriod=baghdadDate().slice(0,7);
+    const advanceCount=allHouses.reduce((sum,h)=>sum+paidEntries(h).filter(e=>e.key>=currentPeriod).length,0);
+    document.getElementById('advanceSummary').textContent=advanceCount.toLocaleString()+' مانگ پێشوەختە پارەدراوە — قەرز نییە.';
+    document.getElementById('advanceSummary').hidden=!advanceCount;
+    const fees = allHouses.map(houseFee);
+    const totalPaidMonths = allHouses.reduce((sum, house) => sum + settledEntries(house).length, 0);
+    const totalDebtMonths = allHouses.reduce((sum, house) => sum + visibleDebtMonths(house), 0);
+    const monthlyPotential = fees.reduce((sum, fee) => sum + fee.amount, 0);
+    const debtValue = allHouses.reduce((sum, house) => sum + houseDebtValue(house), 0);
+    const originalDebt=allHouses.reduce((sum,h)=>sum+dueEntries(h).length*houseFee(h).amount,0);
+    const excludedDebt=allHouses.reduce((sum,h)=>sum+ceoMonthGroups(h).skippable.length*houseFee(h).amount,0);
+    document.getElementById('ceoDebtReconciliation').textContent='قەرزی تۆمارکراو '+formatIQD(originalDebt)+' − مانگە تێپەڕێنراوە زیادەکان '+formatIQD(excludedDebt)+' = قەرزی CEO '+formatIQD(debtValue);
+    const neverPaid=allHouses.filter(h=>!paidEntries(h).length);
+    document.getElementById('ceoNoPaymentSummary').textContent=neverPaid.length.toLocaleString()+' خانوو هیچ مانگێکی پارەدراوی تۆمارکراویان نییە: '+formatIQD(neverPaid.reduce((sum,h)=>sum+houseDebtValue(h),0))+' لە قەرزی CEO؛ یاسای تێپەڕاندن بۆ ئەمانە جێبەجێ نابێت.';
+    renderCEOMonths();
+    const debtors = allHouses.filter(house => visibleDebtMonths(house) > 0);
+    const critical = allHouses.filter(house => visibleDebtMonths(house) >= 6);
+    const overdue = allHouses.filter(house => visibleDebtMonths(house) >= 3);
+    const coveredFees = fees.filter(fee => fee.amount > 0).length;
+    const collectionRate = percentage(totalPaidMonths, totalPaidMonths + totalDebtMonths);
+    const missingDarab = fees.filter(fee => fee.needsDarab).length;
+    const missingQandil = fees.filter(fee => fee.needsApartmentType).length;
+
+    document.getElementById('kpiTotal').textContent = total.toLocaleString();
+    document.getElementById('kpiPotential').textContent = formatIQD(monthlyPotential);
+    const skippedValue=allHouses.reduce((sum,h)=>{
+      const group=ceoMonthGroups(h);
+      return sum+monthEntries([...group.explicit,...group.skippable]).length*houseFee(h).amount;
+    },0);
+    document.getElementById('kpiSkippedValue').textContent = formatIQD(skippedValue);
+    document.getElementById('kpiCollection').textContent = `${collectionRate}%`;
+    document.getElementById('kpiCritical').textContent = critical.length.toLocaleString();
+    document.getElementById('kpiCoverage').textContent = `${percentage(coveredFees, total)}%`;
+
+    document.getElementById('executiveAlerts').innerHTML = `
+      <div class="rounded-2xl border border-rose-200 bg-rose-50 p-4"><div class="text-xs font-extrabold text-rose-700">⚠️ قەرزدارە مەترسیدارەکان</div><div class="mt-1 text-2xl font-extrabold text-rose-700">${critical.length.toLocaleString()} <span class="text-sm">تۆمار</span></div><div class="mt-1 text-[11px] text-rose-600">${formatIQD(critical.reduce((sum, house) => sum + houseDebtValue(house), 0))} · ٦ مانگ یان زیاتر</div></div>
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div class="text-xs font-extrabold text-emerald-700">✓ تۆمارە بێ‌قەرزەکان</div><div class="mt-1 text-2xl font-extrabold text-emerald-700">${allHouses.filter(house => visibleDebtMonths(house) === 0).length.toLocaleString()} <span class="text-sm">تۆمار</span></div><div class="mt-1 text-[11px] text-emerald-600">${percentage(allHouses.filter(house => visibleDebtMonths(house) === 0).length, total)}% لە هەموو تۆمارەکان</div></div>
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div class="text-xs font-extrabold text-amber-700">پێویستی بە پێداچوونەوەی نرخ</div><div class="mt-1 text-2xl font-extrabold text-amber-700">${(missingDarab + missingQandil).toLocaleString()} <span class="text-sm">تۆمار</span></div><div class="mt-1 text-[11px] text-amber-600">${missingDarab} دەراب · ${missingQandil} جۆری قندیل</div></div>`;
+
+    const complexMap = new Map();
+    allHouses.forEach(house => {
+      const name = house.complex || 'بێ کۆمپلێکس';
+      const item = complexMap.get(name) || { name, records: 0, potential: 0, paid: 0, debtMonths: 0, debtValue: 0, overdue: 0 };
+      item.records += 1;
+      item.potential += houseFee(house).amount;
+      item.paid += settledEntries(house).length;
+      item.debtMonths += visibleDebtMonths(house);
+      item.debtValue += houseDebtValue(house);
+      if (visibleDebtMonths(house) >= 3) item.overdue += 1;
+      complexMap.set(name, item);
+    });
+    const complexRows = [...complexMap.values()].sort((a, b) => b.debtValue - a.debtValue || b.potential - a.potential || a.name.localeCompare(b.name));
+    document.getElementById('complexPerformance').innerHTML = complexRows.length ? complexRows.map(item => {
+      const rate = percentage(item.paid, item.paid + item.debtMonths);
+      return `<tr><td class="font-bold text-slate-700">${esc(item.name)}</td><td>${item.records.toLocaleString()}</td><td class="font-mono text-teal-700" dir="ltr">${formatIQD(item.potential)}</td><td><div class="flex min-w-[120px] items-center gap-2"><div class="progress-track flex-1"><div class="progress-fill bg-emerald-500" style="width:${rate}%"></div></div><span class="font-bold text-emerald-700" dir="ltr">${rate}%</span></div></td><td class="font-bold ${item.debtMonths ? 'text-rose-600' : 'text-emerald-700'}">${item.debtMonths.toLocaleString()}</td><td class="font-mono ${item.debtValue ? 'text-rose-600' : 'text-emerald-700'}" dir="ltr">${formatIQD(item.debtValue)}</td></tr>`;
+    }).join('') : '<tr><td colspan="7" class="py-8 text-center text-slate-400">هیچ داتاکانیەک نییە</td></tr>';
+
+    const riskBands = [
+      ['بێ‌قەرز', allHouses.filter(house => visibleDebtMonths(house) === 0).length, 'bg-emerald-500', 'هیچ مانگێکی قەرز نییە'],
+      ['١–٢ مانگ قەرزدار', allHouses.filter(house => { const debt = visibleDebtMonths(house); return debt >= 1 && debt <= 2; }).length, 'bg-amber-400', 'تێبینیی ئاسایی'],
+      ['٣–٥ مانگ قەرزدار', allHouses.filter(house => { const debt = visibleDebtMonths(house); return debt >= 3 && debt <= 5; }).length, 'bg-orange-500', 'پێویستی بە پەیوەندیکردن'],
+      ['٦ مانگ یان زیاتر', critical.length, 'bg-rose-600', 'مەترسیی بەرز']
+    ];
+    document.getElementById('riskStats').innerHTML = riskBands.map(([label, count, color, note]) => progressRow(label, count, total, color, note)).join('');
+
+    const trendMonths = monthsForTrend();
+    allHouses.forEach(house => house.payments.forEach(event => {
+      if (event.type !== 'payment') return;
+      const date = paymentEventDate(event);
+      if (!date) return;
+      const row = trendMonths.find(item => item.key === dateKeyInBaghdad(date));
+      if (!row) return;
+      row.amount += numberOr(event.amount);
+      row.count += 1;
+    }));
+    const maxTrendAmount = Math.max(1, ...trendMonths.map(item => item.amount));
+    const totalTrendAmount = trendMonths.reduce((sum, item) => sum + item.amount, 0);
+    const paidEventCount = trendMonths.reduce((sum, item) => sum + item.count, 0);
+    document.getElementById('paymentTrendNote').textContent = paidEventCount ? `${paidEventCount.toLocaleString()} پارەدان لە ٦ مانگی ڕابردوو` : 'هیچ پارەدانێکی تۆمارکراو لەم ماوەیەدا نییە';
+    document.getElementById('paymentTrendTotal').textContent = formatIQD(totalTrendAmount);
+    document.getElementById('paymentTrend').innerHTML = `<div class="trend-bars">${trendMonths.map(item => {
+      const height = Math.max(4, Math.round((item.amount / maxTrendAmount) * 125));
+      const label = new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'Asia/Baghdad' }).format(item.date);
+      return `<div class="trend-item"><div class="trend-amount">${item.count ? `${compactIQD(item.amount)} · ${item.count}` : '—'}</div><div class="trend-wrap"><div class="trend-bar" style="height:${height}px;opacity:${item.count ? 1 : .16}"></div></div><div class="trend-label">${esc(label)}</div></div>`;
+    }).join('')}</div>`;
+
+    const recentPayments = [];
+    allHouses.forEach(house => house.payments.forEach(event => {
+      if (event.type !== 'payment') return;
+      const date = paymentEventDate(event); if (!date) return;
+      recentPayments.push({ house, event, date });
+    }));
+    recentPayments.sort((a, b) => b.date - a.date);
+    const recentRoot = document.getElementById('recentPayments');
+    recentRoot.innerHTML = recentPayments.length ? `<table class="analytics-table"><thead><tr><th>بەروار</th><th>کۆمپلێکس</th><th>ژمارەی خانوو</th><th>مانگەکان</th><th>بڕ</th><th>تۆمارکەر</th></tr></thead><tbody>${recentPayments.slice(0, 12).map(({ house, event, date }) => `<tr><td dir="ltr">${esc(date.toLocaleDateString('en-CA', { timeZone: 'Asia/Baghdad' }))}</td><td>${esc(house.complex || '—')}</td><td dir="ltr">${esc(house.houseNum || '—')}</td><td dir="ltr">${esc(Array.isArray(event.months) ? event.months.join('، ') : String(event.monthsRecorded || '—'))}</td><td class="font-mono text-emerald-700" dir="ltr">${formatIQD(event.amount)}</td><td>${esc(event.recordedBy || 'admin')}</td></tr>`).join('')}</tbody></table>` : '<p class="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500">هێشتا پارەدانێک تۆمار نەکراوە</p>';
+
+    const hasName = allHouses.filter(house => house.residentName.trim()).length;
+    const hasPhone = allHouses.filter(house => house.mobile.trim()).length;
+    const hasComplex = allHouses.filter(house => house.complex.trim()).length;
+    document.getElementById('dataQualityStats').innerHTML = [
+      progressRow('ناوی دانیشتوو', hasName, total, 'bg-indigo-500'),
+      progressRow('مۆبایل / تەلەفۆن', hasPhone, total, 'bg-sky-500'),
+      progressRow('کۆمپلێکس', hasComplex, total, 'bg-violet-500'),
+      progressRow('نرخی خزمەتگوزاری', coveredFees, total, 'bg-emerald-500'),
+      progressRow('دەراب / جۆری قندیل پێویست', missingDarab + missingQandil, total, 'bg-amber-500', 'ژمارەی کەمتر باشترە')
+    ].join('');
+
+    const topDebtors = debtors.sort((a, b) => houseDebtValue(b) - houseDebtValue(a) || visibleDebtMonths(b) - visibleDebtMonths(a)).slice(0, 8);
+    document.getElementById('topDebtors').innerHTML = topDebtors.length ? topDebtors.map((house, index) => {
+      const displayName = house.residentName.trim() || 'ناوەکە تۆمارنەکراوە';
+      return `<div class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3"><div class="min-w-0"><div class="flex items-center gap-2"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-rose-100 text-[10px] font-extrabold text-rose-700">${index + 1}</span><span class="truncate text-xs font-bold text-slate-700">${esc(displayName)}</span></div><div class="mt-1 truncate pr-7 text-[10px] text-slate-500">${esc(house.complex || 'بێ کۆمپلێکس')} · ${esc(house.houseNum || house.id)}</div></div><div class="shrink-0 text-left" dir="ltr"><div class="text-xs font-extrabold text-rose-600">${formatIQD(houseDebtValue(house))}</div><div class="mt-0.5 text-[10px] text-slate-500">${visibleDebtMonths(house)} مانگ</div></div></div>`;
+    }).join('') : '<div class="rounded-xl bg-emerald-50 p-4 text-center text-xs font-bold text-emerald-700">هیچ تۆمارێکی قەرزدار نییە</div>';
+
+    const statusMap = new Map();
+    allHouses.forEach(house => { const label = statusName(house.occupancyType); statusMap.set(label, (statusMap.get(label) || 0) + 1); });
+    const statusColors = ['bg-indigo-500', 'bg-cyan-500', 'bg-violet-500', 'bg-slate-500'];
+    document.getElementById('statusStats').innerHTML = [...statusMap.entries()].sort((a, b) => b[1] - a[1]).map(([label, count], index) => progressRow(label, count, total, statusColors[index % statusColors.length])).join('') || '<p class="text-xs text-slate-400">هیچ داتاکانیەک نییە</p>';
+
+    const nationalityMap = new Map();
+    allHouses.forEach(house => { const label = normalizeText(house.nationality).replace(/\s+/g,' ').trim() || 'نەدیار'; nationalityMap.set(label, (nationalityMap.get(label) || 0) + 1); });
+    document.getElementById('nationalityStats').innerHTML = [...nationalityMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label, count], index) => progressRow(label, count, total, ['bg-emerald-500', 'bg-blue-500', 'bg-violet-500', 'bg-amber-500'][index % 4])).join('') || '<p class="text-xs text-slate-400">هیچ داتاکانیەک نییە</p>';
+
+    renderRateGuide(missingDarab, missingQandil);
+    document.getElementById('lastUpdated').textContent = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Baghdad' }).format(new Date());
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('dashboard').classList.remove('hidden');
+  }
+
+  function setConnectionStatus(snapshot) {
+    const status = document.getElementById('connectionStatus');
+    if (snapshot.metadata.fromCache) {
+      status.className = 'connection-pill bg-amber-500/15 text-amber-200';
+      status.textContent = '● داتاکانی پاشەکەوتکراو — ئۆفلاین';
+    } else if (snapshot.metadata.hasPendingWrites) {
+      status.className = 'connection-pill bg-indigo-500/15 text-indigo-200';
+      status.textContent = '● نوێکردنەوەی داتا';
+    } else {
+      status.className = 'connection-pill bg-emerald-500/15 text-emerald-200';
+      status.textContent = '● پەیوەندی سەرکەوتوو';
+    }
+  }
+
+  async function startCEO() {
+    if (ceoStarted) return;
+    ceoStarted = true;
+    try {
+      await persistenceReady;
+      housesUnsubscribe = onSnapshot(collection(db, 'houses'), { includeMetadataChanges: true }, snapshot => {
+        allHouses = snapshot.docs.map(document => normalizeHouse(document.id, document.data() || {}));
+        setConnectionStatus(snapshot);
+        renderDashboard();
+      }, error => {
+        console.error(error.code);
+        allHouses = [];
+        ceoStarted = false;
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('loadingState').classList.remove('hidden');
+        document.getElementById('loadingState').innerHTML = '<div class="text-sm font-bold text-rose-600">داتا بارنەکرا. تکایە پەیوەندی ئینتەرنێت بپشکنە.</div>';
+        const retry = document.createElement('button');
+        retry.textContent = 'هەوڵدانەوە';
+        retry.className = 'm-3 rounded-lg bg-slate-100 px-4 py-2';
+        retry.addEventListener('click', () => { housesUnsubscribe?.(); startCEO(); });
+        document.getElementById('loadingState').appendChild(retry);
+        const status = document.getElementById('connectionStatus');
+        status.className = 'connection-pill bg-rose-500/15 text-rose-200';
+        status.textContent = '● کێشەی پەیوەندی';
+      });
+    } catch (error) {
+      console.error(error);
+      document.getElementById('loadingState').innerHTML = '<div class="text-sm font-bold text-rose-600">داتاکانی CEO ئامادە نەبوو.</div>';
+    }
+  }
+
+  async function sha256Hex(text) {
+    const bytes = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  window.checkCEOAccess = async function() {
+    const input = document.getElementById('ceoPassInput');
+    const error = document.getElementById('ceoLoginError');
+    const button = document.getElementById('ceoLoginButton');
+    button.disabled = true;
+    error.classList.add('hidden');
+    try {
+      if (await sha256Hex(input.value) !== CEO_PASSWORD_HASH) {
+        error.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+        return;
+      }
+      ceoSession(true);
+      document.getElementById('ceoLoginScreen').classList.add('hidden');
+      document.getElementById('ceoHeader').classList.remove('hidden');
+      document.getElementById('ceoContent').classList.remove('hidden');
+      startCEO();
+    } catch (errorValue) {
+      console.error(errorValue);
+      error.textContent = 'ئەم وێبگەڕە پشتگیری کۆدی پارێزراو ناکات.';
+      error.classList.remove('hidden');
+    } finally {
+      button.disabled = false;
+    }
+  };
+
+  window.logoutCEO = function() {
+    ceoSession(false);
+    if (housesUnsubscribe) housesUnsubscribe();
+    housesUnsubscribe = null;
+    ceoStarted = false;
+    allHouses = [];
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('ceoContent').classList.add('hidden');
+    document.getElementById('ceoHeader').classList.add('hidden');
+    document.getElementById('ceoLoginScreen').classList.remove('hidden');
+    document.getElementById('ceoPassInput').value = '';
+    document.getElementById('ceoPassInput').focus();
+  };
+
+  document.getElementById('ceoPassInput').addEventListener('keydown', event => {
+    if (event.key === 'Enter') window.checkCEOAccess();
+  });
+  document.getElementById('ceoDate').textContent = new Intl.DateTimeFormat('ku', { dateStyle: 'full', timeZone: 'Asia/Baghdad' }).format(new Date());
+  if (ceoSession()) {
+    document.getElementById('ceoLoginScreen').classList.add('hidden');
+    document.getElementById('ceoHeader').classList.remove('hidden');
+    document.getElementById('ceoContent').classList.remove('hidden');
+    startCEO();
+  } else {
+    document.getElementById('ceoPassInput').focus();
+  }
+
+  let lastBillingDate = baghdadDate();
+  setInterval(() => { const date = baghdadDate(); if (date !== lastBillingDate) { lastBillingDate = date; if (ceoStarted) renderDashboard(); } },30000);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(error => console.warn('Service worker registration failed:', error));
+
+window.nuenaranLoginReady?.();
+</script>
+</body>
+</html>
