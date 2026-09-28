@@ -68,6 +68,11 @@ body { line-height:1.65; }
 #mainContent button, .modal-box button { min-height:44px; }
 #mainContent .detail-row .max-h-36 { max-height:24rem; }
 #mainContent .detail-row [dir="ltr"] { padding:6px 10px; }
+#mainContent .index-detail-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; padding:4px; }
+#mainContent .index-detail-grid > div, #mainContent .index-detail-panel { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px; }
+#mainContent .index-detail-grid dt { color:#64748b; font-size:.8rem; }
+#mainContent .index-detail-grid dd { margin:4px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; color:#1e293b; }
+#mainContent .index-detail-panel { min-width:0; }
 .month-choice { background:#fff1f2; color:#9f1239; border:2px solid #fecdd3; font-weight:700; }
 .month-choice[data-state="advance"] { background:#eff6ff; color:#1d4ed8; border-color:#93c5fd; }
 .month-choice[data-state="selected"] { background:#047857; color:white; border-color:#047857; box-shadow:0 2px 4px #065f4620; }
@@ -1080,37 +1085,17 @@ function render(){
 
 function houseDetailHTML(h) {
   const paid=paidEntries(h).length, unpaid=visibleDebtMonths(h), serviceFee=serviceFeeForHouse(h);
-  return `<td colspan="8" class="p-4 bg-slate-50 border-b-2 border-blue-100">
-        <div class="grid md:grid-cols-2 gap-3">
-          <div class="bg-white rounded-lg p-3 border border-green-200">
-            <h4 class="text-green-700 font-bold text-xs mb-2 flex justify-between">
-              <span>✅ مانگەکانی دراوە</span><span>${paid} مانگ</span>
-            </h4>
-            <div class="text-[0.68rem] font-mono text-gray-600 max-h-36 overflow-y-auto" dir="rtl">
-              ${formatMonths(paidEntries(h))}
-            </div>
-          </div>
-          <div class="bg-white rounded-lg p-3 border border-red-200">
-            <h4 class="text-red-700 font-bold text-xs mb-2 flex justify-between">
-              <span>❌ مانگە قەرزدارەکان</span><span>${unpaid} مانگ</span>
-            </h4>
-            <div class="text-[0.68rem] font-mono text-gray-600 max-h-36 overflow-y-auto" dir="rtl">
-              ${formatMonths(visibleUnpaidMonths(h))}
-              ${monthDataWarning(h) ? '<p class="text-amber-700">بەرواری قەرزەکان تەواو نییە؛ پێویستی بە پشکنینە.</p>' : ''}
-            </div>
-          </div>
+  const raw=h.raw||h, val=(...keys)=>{for(const k of keys){const v=raw[k];if(v!==undefined&&v!==null&&String(v).trim())return String(v).trim()}return '—'};
+  const notes=Array.isArray(h.notes)?h.notes:Array.isArray(raw.notes)?raw.notes:[];
+  const details=[['مۆبایل',val('mobile','phone')],['پیشە',val('profession','occupation','job')],['نەتەوە',h.nationality||'—'],['ناوی خاووەن خانوو',h.ownerName||'—'],['تەلەفۆنی کرێچی',h.renterPhone||'—'],['تەلەفۆنی خاوەن مولک',h.ownerPhone||'—'],['زانیاریی زیادە',val('sourceExtra','sourceColumn1','Column1')]];
+  return `<td colspan="10" class="p-3 bg-slate-50 border-b-2 border-blue-100">
+        <dl class="index-detail-grid">${details.map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>
+        <div class="grid md:grid-cols-2 gap-3 mt-2">
+          <section class="index-detail-panel"><h4 class="text-green-700 font-bold text-sm mb-2 flex justify-between"><span>✅ مانگەکانی دراوە</span><span>${paid} مانگ</span></h4><div class="text-xs text-slate-600 max-h-36 overflow-y-auto">${formatMonths(paidEntries(h))}</div></section>
+          <section class="index-detail-panel"><h4 class="text-red-700 font-bold text-sm mb-2 flex justify-between"><span>❌ مانگە قەرزدارەکان</span><span>${unpaid} مانگ</span></h4><div class="text-xs text-slate-600 max-h-36 overflow-y-auto">${formatMonths(visibleUnpaidMonths(h))}${monthDataWarning(h)?'<p class="text-amber-700 mt-2">بەرواری قەرزەکان تەواو نییە؛ پێویستی بە پشکنینە.</p>':''}</div></section>
         </div>
-        <div class="mt-3 rounded-lg border ${serviceFee.amount ? 'border-indigo-200 bg-indigo-50' : 'border-amber-200 bg-amber-50'} p-3 text-xs">
-          <span class="font-bold ${serviceFee.amount ? 'text-indigo-800' : 'text-amber-800'}">پارەی خزمەتگوزاری مانگانە:</span>
-          <span class="font-mono font-bold mr-1" dir="ltr">${serviceFee.amount ? `${fmt(serviceFee.amount)} IQD` : '—'}</span>
-          <span class="text-[11px] text-slate-500 mr-1">${esc(serviceFee.rule)}</span>
-        </div>
-        ${h.notes && h.notes.length ? `<div class="mt-3 bg-yellow-50 rounded-lg p-3 border border-yellow-200">
-            <h4 class="text-yellow-800 font-bold text-xs mb-2">📝 تێبینییەکان</h4>
-            <div class="text-[0.68rem] font-mono text-yellow-900 max-h-24 overflow-y-auto" dir="rtl">
-              ${h.notes.map(n => `<div class="mb-1">${esc(n)}</div>`).join('')}
-            </div>
-          </div>` : ''}
+        <div class="index-detail-panel mt-3 text-sm"><span class="font-bold text-slate-700">پارەی خزمەتگوزاری مانگانە:</span> <span class="font-mono font-bold" dir="ltr">${serviceFee.amount?`${fmt(serviceFee.amount)} IQD`:'—'}</span> <span class="text-xs text-slate-500">${esc(serviceFee.rule)}</span></div>
+        ${notes.length?`<div class="index-detail-panel mt-3"><h4 class="text-amber-800 font-bold text-sm mb-2">📝 تێبینییەکان</h4><div class="text-xs text-amber-900 max-h-24 overflow-y-auto">${notes.map(n=>`<div class="mb-1">${esc(n)}</div>`).join('')}</div></div>`:''}
       </td>`;
 }
 

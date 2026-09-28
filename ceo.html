@@ -650,6 +650,13 @@ return { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmen
     const date = typeof value.toDate === 'function' ? value.toDate() : value.seconds ? new Date(value.seconds * 1000) : new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   }
+  function effectivePaymentAmount(event) {
+    const months = Array.isArray(event.months) ? event.months : [];
+    if (!months.length) return numberOr(event.amount);
+    const reversed = new Set(Array.isArray(event.reversedMonths) ? event.reversedMonths : []);
+    return numberOr(event.amount) * months.filter(month => !reversed.has(month)).length / months.length;
+  }
+  const correctionStateLabel = { paid: 'دراوە', unpaid: 'قەرز', skipped: 'قەرز نییە', none: 'بێ تۆمار' };
 
   function dateKeyInBaghdad(date) {
     const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Baghdad', year: 'numeric', month: 'numeric' }).formatToParts(date);
@@ -775,7 +782,9 @@ return { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmen
       if (!date) return;
       const row = trendMonths.find(item => item.key === dateKeyInBaghdad(date));
       if (!row) return;
-      row.amount += numberOr(event.amount);
+      const amount = effectivePaymentAmount(event);
+      if (!amount) return;
+      row.amount += amount;
       row.count += 1;
     }));
     const maxTrendAmount = Math.max(1, ...trendMonths.map(item => item.amount));
@@ -791,13 +800,13 @@ return { normalizeServiceText, compactServiceText, isShopComplex, qandilApartmen
 
     const recentPayments = [];
     allHouses.forEach(house => house.payments.forEach(event => {
-      if (event.type !== 'payment') return;
+      if (event.type !== 'payment' && event.type !== 'debt-correction') return;
       const date = paymentEventDate(event); if (!date) return;
       recentPayments.push({ house, event, date });
     }));
     recentPayments.sort((a, b) => b.date - a.date);
     const recentRoot = document.getElementById('recentPayments');
-    recentRoot.innerHTML = recentPayments.length ? `<table class="analytics-table"><thead><tr><th>بەروار</th><th>کۆمپلێکس</th><th>ژمارەی خانوو</th><th>مانگەکان</th><th>بڕ</th><th>تۆمارکەر</th></tr></thead><tbody>${recentPayments.slice(0, 12).map(({ house, event, date }) => `<tr><td dir="ltr">${esc(date.toLocaleDateString('en-CA', { timeZone: 'Asia/Baghdad' }))}</td><td>${esc(house.complex || '—')}</td><td dir="ltr">${esc(house.houseNum || '—')}</td><td dir="ltr">${esc(Array.isArray(event.months) ? event.months.join('، ') : String(event.monthsRecorded || '—'))}</td><td class="font-mono text-emerald-700" dir="ltr">${formatIQD(event.amount)}</td><td>${esc(event.recordedBy || 'admin')}</td></tr>`).join('')}</tbody></table>` : '<p class="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500">هێشتا پارەدانێک تۆمار نەکراوە</p>';
+    recentRoot.innerHTML = recentPayments.length ? `<table class="analytics-table"><thead><tr><th>بەروار</th><th>کۆمپلێکس</th><th>ژمارەی خانوو</th><th>مانگەکان / گۆڕانکاری</th><th>بڕ</th><th>تۆمارکەر</th></tr></thead><tbody>${recentPayments.slice(0, 12).map(({ house, event, date }) => `<tr><td dir="ltr">${esc(date.toLocaleDateString('en-CA', { timeZone: 'Asia/Baghdad' }))}</td><td>${esc(house.complex || '—')}</td><td dir="ltr">${esc(house.houseNum || '—')}</td><td dir="ltr">${esc(event.type === 'debt-correction' ? `${event.month}: ${correctionStateLabel[event.previousState] || 'بێ تۆمار'} → ${correctionStateLabel[event.newState] || 'بێ تۆمار'} · ${event.reason || ''}` : Array.isArray(event.months) ? event.months.join('، ') : String(event.monthsRecorded || '—'))}</td><td class="font-mono text-emerald-700" dir="ltr">${event.type === 'debt-correction' ? '—' : formatIQD(effectivePaymentAmount(event))}</td><td>${esc(event.recordedBy || 'admin')}</td></tr>`).join('')}</tbody></table>` : '<p class="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500">هێشتا چالاکییەک تۆمار نەکراوە</p>';
 
     const hasName = allHouses.filter(house => house.residentName.trim()).length;
     const hasPhone = allHouses.filter(house => house.mobile.trim()).length;

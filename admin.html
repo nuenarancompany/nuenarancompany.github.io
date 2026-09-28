@@ -265,7 +265,7 @@ body { line-height:1.65; }
   </div>
 </div>
 
-<!-- PAYMENT MODAL (monthly service payment only) -->
+<!-- PAYMENT AND DEBT CORRECTION MODAL -->
 <div id="paymentModal" class="modal-bg" onclick="if(event.target===this)closePaymentModal()">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
     <div class="bg-slate-800 text-white px-5 py-4 rounded-t-2xl flex justify-between items-center">
@@ -279,18 +279,24 @@ body { line-height:1.65; }
         <div id="paymentHouseInfo" class="text-sm text-slate-600"></div>
       </div>
 
-      <p class="text-sm text-slate-600">هەمان مانگەکانی وەسلەکە هەڵبژێرە.</p>
+      <div class="flex gap-2 flex-wrap" role="group" aria-label="جۆری کردار">
+        <button type="button" id="paymentModePay" onclick="setPaymentMode('pay')" class="rounded-xl px-4 py-2 bg-emerald-600 text-white">پارەدان</button>
+        <button type="button" id="paymentModeAdd" onclick="setPaymentMode('debt-add')" class="rounded-xl px-4 py-2 bg-slate-100 text-slate-700">➕ زیادکردنی قەرز</button>
+        <button type="button" id="paymentModeRemove" onclick="setPaymentMode('debt-remove')" class="rounded-xl px-4 py-2 bg-slate-100 text-slate-700">➖ لابردنی قەرز</button>
+      </div>
+      <p id="paymentInstructions" class="text-sm text-slate-600">هەمان مانگەکانی وەسلەکە هەڵبژێرە.</p>
       <div class="advance-controls">
-        <label><input id="paymentAdvance" type="checkbox" onchange="refreshPaymentMonths()"> پارەدانی پێشوەختە</label>
+        <label id="paymentAdvanceWrap"><input id="paymentAdvance" type="checkbox" onchange="refreshPaymentMonths()"> پارەدانی پێشوەختە</label>
         <label>ساڵ <select id="paymentYear" aria-label="ساڵی پارەدان" onchange="refreshPaymentMonths()" disabled></select></label>
         <button type="button" onclick="selectPaymentYear()">هەموو مانگەکانی ئەم ساڵە</button>
       </div>
-      <p class="month-legend"><span>🔴 قەرز</span><span>🔵 پێشوەختە — قەرز نییە</span><span>🟢 هەڵبژێردراو</span></p>
+      <p id="paymentLegend" class="month-legend"><span>🔴 قەرز</span><span>🔵 پێشوەختە — قەرز نییە</span><span>🟢 هەڵبژێردراو</span></p>
       <div id="paymentMonthOptions" class="payment-month-grid"></div>
       <aside id="paymentHistoryNote" class="history-note" hidden></aside>
+      <label id="debtReasonWrap" class="hidden block">هۆکاری گۆڕانکاری <textarea id="debtReason" class="inp w-full" rows="2" maxlength="500" placeholder="بۆچی ئەم قەرزە زیاد یان لابرا؟"></textarea></label>
 
       <div>
-        <label class="lbl">کۆی پارە (نرخی یەک مانگ * ژمارەی مانگ)</label>
+        <label id="paymentMathLabel" class="lbl">کۆی پارە (نرخی یەک مانگ * ژمارەی مانگ)</label>
         <div id="paymentMath" class="p-3 bg-slate-50 rounded-lg text-sm text-slate-700">کۆی پارە لێرە نیشان دەدرێت</div>
       </div>
 
@@ -645,14 +651,14 @@ return { createPaymentQueue };
 
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
 import {getFirestore,collection,doc,onSnapshot,runTransaction,enableMultiTabIndexedDbPersistence} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
-const { escapeHTML: esc, dueEntries, paidEntries, skippedEntries, planPayment, paymentOptions, compareHouses, searchText, statusKind, recordInfo, baghdadDate, monthDataWarning } = __local_business_js;
+const { escapeHTML: esc, dueEntries, paidEntries, skippedEntries, monthEntries, monthMap, parseMonthKey, planPayment, paymentOptions, compareHouses, searchText, statusKind, recordInfo, baghdadDate, monthDataWarning } = __local_business_js;
 const { serviceFeeForHouse } = __local_service_fees_js;
 const { createPaymentQueue } = __local_payment_queue_js;
 const app=initializeApp({apiKey:'AIzaSyBe2dBVhBMFR7ZAR3Z26ZG0q8e2KQTHlII',authDomain:'nuenaran.firebaseapp.com',projectId:'nuenaran',appId:'1:271798697223:web:8dade3ac017ce1a9c399a2'});
 const db=getFirestore(app), $=id=>document.getElementById(id);
 const persistence=enableMultiTabIndexedDbPersistence(db).catch(()=>{});
 const fmt=n=>Number(n).toLocaleString('en-US')+' IQD';
-let houses=[],pending=[],selected=new Set(),activeId=null,unsubscribe=null,started=false,sort=1,saving=false,metadata={fromCache:true};
+let houses=[],pending=[],selected=new Set(),activeId=null,paymentMode='pay',unsubscribe=null,started=false,sort=1,saving=false,metadata={fromCache:true};
 const label=h=>String(h.houseNum??h.houseNumber??'—')+(h.block?' · بلۆک '+h.block:'');
 const resident=h=>h.residentName||h.tenantName||h.renterName||h.ownerName||h.name||'—';
 function normalize(id,data){return {...data,id,houseNum:String(data.houseNum??data.houseNumber??''),complex:String(data.complex??''),payments:Array.isArray(data.payments)?data.payments:[]};}
@@ -669,7 +675,9 @@ const queue=createPaymentQueue(async request=>{
     if(!fee||fee!==request.rate)throw Error('نرخ گۆڕاوە؛ پارەدانەکە بپشکنە.');
     const update=planPayment(house,request.months,new Date(),{allowAdvance:true});
     const receipt={id:request.id,type:'payment',monthsRecorded:request.months.length,months:request.months,amount:fee*request.months.length,note:'وەسل',recordedBy:'admin',createdAt:new Date().toISOString(),requestedAt:request.createdAt};
-    tx.update(ref,{...update,payments:[...house.payments,receipt]});
+    const overrides={...(house.accountingOverrides||{})};
+    request.months.forEach(month=>delete overrides[month]);
+    tx.update(ref,{...update,accountingOverrides:overrides,payments:[...house.payments,receipt]});
   });
   $('paymentNotice').textContent='✓ پارەدان پەسەندکرا: '+request.houseLabel+' · '+request.months.join('، ');
 },async rows=>{pending=rows;const key=JSON.stringify(rows);if(key!==queueViewKey){queueViewKey=key;renderQueue();render();if(activeId)renderPayment();}});
@@ -750,10 +758,17 @@ window.saveHouseProfile=async()=>{
   try{await runTransaction(db,async tx=>{const ref=existing?doc(db,'houses',existing.id):doc(db,'houses',crypto.randomUUID());let previous={};if(existing){const snap=await tx.get(ref);if(!snap.exists())throw Error('خانوو نەدۆزرایەوە.');previous=snap.data()||{};}tx.set(ref,existing?{...previous,...fields}:{...fields,sourceSchema:'manual-v1',sourceSheet:'manual',sourceSerial:houseNum,paidMonths:{},unpaidMonths:{},skippedMonths:{},payments:[],totalPaid:0,totalUnpaid:0,createdAt:new Date().toISOString()});});window.closeHouseEditor();$('paymentNotice').textContent=existing?'✓ زانیاریی خانوو نوێکرایەوە.':'✓ خانووی نوێ زیادکرا.';}catch(e){alert('پاشەکەوت نەکرا: '+e.message);}finally{saving=false;if(button)button.disabled=false;}
 };
 window.toggleAdminSortHouseNum=()=>{sort=-sort;render();};
+function accountingState(house,key){
+  if(monthEntries(house.skippedMonths).some(e=>e.key===key))return 'skipped';
+  if(monthEntries(house.paidMonths).some(e=>e.key===key))return 'paid';
+  if(monthEntries(house.unpaidMonths).some(e=>e.key===key))return 'unpaid';
+  return 'none';
+}
+const accountingLabels={paid:'دراوە',unpaid:'قەرز',skipped:'قەرز نییە / تێپەڕێنراو',none:'بێ تۆمار'};
 window.openPaymentModal=id=>{
   const h=houses.find(h=>h.id===id);if(!h)return;
   $('paymentAdvance').checked=false;preparePaymentYear($('paymentYear'));
-  activeId=id;selected=new Set(dueEntries(h).slice(0,1).map(e=>e.key));renderPayment();$('paymentModal').classList.add('open');
+  activeId=id;paymentMode='pay';$('debtReason').value='';selected=new Set(dueEntries(h).slice(0,1).map(e=>e.key));renderPayment();$('paymentModal').classList.add('open');
 };
 window.closePaymentModal=()=>{if(saving)return;activeId=null;selected.clear();$('paymentModal').classList.remove('open');};
 // Display-only history; never changes payable months or payment totals.
@@ -777,10 +792,10 @@ function showPaymentHistory(element, house) {
 }
 // Keep month buttons mounted while selecting or entering cash (no grid rebuild).
 function renderMonthPicker(root, entries, selected, attribute, onToggle) {
-  const signature = entries.map(e=>e.key+(e.advance?'a':'d')).join('|');
+  const signature = entries.map(e=>e.key+(e.advance?'a':'d')+(e.label||'')).join('|');
   let view = root._monthView;
   if (!view || view.signature !== signature) {
-    root.innerHTML = entries.map(e=>`<button type="button" ${attribute}="${e.key}" class="month-choice" aria-pressed="false"><span dir="ltr">${e.key}</span><span data-month-label>${e.advance?'پێشوەختە':'قەرز'}</span></button>`).join('') || '<p class="col-span-full">هیچ مانگێک نییە بۆ پارەدان.</p>';
+    root.innerHTML = entries.map(e=>`<button type="button" ${attribute}="${e.key}" class="month-choice" aria-pressed="false"><span dir="ltr">${e.key}</span><span data-month-label>${esc(e.label|| (e.advance?'پێشوەختە':'قەرز'))}</span></button>`).join('') || '<p class="col-span-full">هیچ مانگێک نییە بۆ ئەم کردارە.</p>';
     view = root._monthView = {signature, buttons:[...root.querySelectorAll('button')], entries:new Map(entries.map(e=>[e.key,e]))};
   }
   view.toggle = onToggle;
@@ -799,7 +814,7 @@ function renderMonthPicker(root, entries, selected, attribute, onToggle) {
     if (button.dataset.state === state) continue;
     button.dataset.state = state;
     button.setAttribute('aria-pressed', String(chosen));
-    button.querySelector('[data-month-label]').textContent = chosen ? 'هەڵبژێردراوە ✓' : entry.advance ? 'پێشوەختە' : 'قەرز';
+    button.querySelector('[data-month-label]').textContent = chosen ? 'هەڵبژێردراوە ✓' : entry.label || (entry.advance ? 'پێشوەختە' : 'قەرز');
   }
 }
 function preparePaymentYear(select) {
@@ -807,18 +822,55 @@ function preparePaymentYear(select) {
   select.innerHTML = [year,year+1].map(y=>`<option value="${y}">${y}</option>`).join('');
   select.value = String(year);
 }
+function prepareDebtYear(select) {
+  const year=Number(baghdadDate().slice(0,4));
+  select.innerHTML=Array.from({length:year-2019+1},(_,i)=>2019+i).reverse().map(y=>`<option value="${y}">${y}</option>`).join('');
+  select.value=String(year);
+}
+function debtMonthOptions(house,mode,year) {
+  if(mode==='debt-remove')return dueEntries(house).filter(e=>String(e.year)===String(year)).map(e=>({...e,label:'قەرز'}));
+  const last=baghdadDate().slice(0,7),out=[];
+  for(let month=1;month<=12;month++){
+    const key=`${year}-${String(month).padStart(2,'0')}`;
+    if(key>last)continue;
+    const state=accountingState(house,key);
+    if(state==='unpaid')continue;
+    out.push({key,year:Number(year),month,advance:state==='paid',label:accountingLabels[state]});
+  }
+  return out;
+}
+window.setPaymentMode=mode=>{
+  if(saving||!activeId||!['pay','debt-add','debt-remove'].includes(mode))return;
+  paymentMode=mode;selected.clear();$('paymentAdvance').checked=false;$('debtReason').value='';
+  if(mode==='pay')preparePaymentYear($('paymentYear'));else prepareDebtYear($('paymentYear'));
+  renderPayment();
+};
 window.refreshPaymentMonths=()=>renderPayment();
 window.selectPaymentYear=()=>{
   const h=houses.find(h=>h.id===activeId);if(!h)return;
   const year=$('paymentYear').value;
-  selected=new Set(paymentOptions(h,$('paymentAdvance').checked?year:null).filter(e=>String(e.year)===year).map(e=>e.key));
+  const options=paymentMode==='pay'?paymentOptions(h,$('paymentAdvance').checked?year:null):debtMonthOptions(h,paymentMode,year);
+  selected=new Set(options.filter(e=>String(e.year)===year).map(e=>e.key));
   renderPayment();
 };
 function renderPayment(){
   const h=houses.find(h=>h.id===activeId);if(!h){window.closePaymentModal();return;}
   showPaymentHistory($('paymentHistoryNote'),h);
-  $('paymentYear').disabled=!$('paymentAdvance').checked;
-  const due=paymentOptions(h,$('paymentAdvance').checked?$('paymentYear').value:null),allowed=new Set(due.map(e=>e.key));selected=new Set([...selected].filter(k=>allowed.has(k)));
+  const pay=paymentMode==='pay',add=paymentMode==='debt-add';
+  $('paymentYear').disabled=pay&&!$('paymentAdvance').checked;
+  $('paymentAdvanceWrap').classList.toggle('hidden',!pay);
+  $('debtReasonWrap').classList.toggle('hidden',pay);
+  $('paymentLegend').classList.toggle('hidden',!pay);
+  $('paymentModalTitle').textContent=pay?'💸 وەرگرتنی پارە':add?'➕ زیادکردنی قەرز':'➖ لابردنی قەرز';
+  $('paymentInstructions').textContent=pay?'هەمان مانگەکانی وەسلەکە هەڵبژێرە.':add?'ئەو مانگانە هەڵبژێرە کە دەبێت ببنە قەرز.':'ئەو مانگە قەرزدارانە هەڵبژێرە کە دەبێت لاببرێن.';
+  $('paymentMathLabel').textContent=pay?'کۆی پارە (نرخی یەک مانگ * ژمارەی مانگ)':'گۆڕانکاریی قەرز — ئەمە وەسل نییە';
+  for(const [id,mode] of [['paymentModePay','pay'],['paymentModeAdd','debt-add'],['paymentModeRemove','debt-remove']]){
+    const button=$(id),on=mode===paymentMode;
+    button.className=`rounded-xl px-4 py-2 ${on?mode==='debt-remove'?'bg-rose-600 text-white':mode==='debt-add'?'bg-blue-700 text-white':'bg-emerald-600 text-white':'bg-slate-100 text-slate-700'}`;
+    button.setAttribute('aria-pressed',String(on));
+  }
+  const due=pay?paymentOptions(h,$('paymentAdvance').checked?$('paymentYear').value:null):debtMonthOptions(h,paymentMode,$('paymentYear').value);
+  const allowed=new Set(due.map(e=>e.key));selected=new Set([...selected].filter(k=>allowed.has(k)));
   $('paymentHouseInfo').textContent=`${baghdadDate()} · ${h.complex} · ${label(h)} · ${resident(h)}`;
   renderMonthPicker($('paymentMonthOptions'),due,selected,'data-month',key=>{
     if(saving)return;
@@ -826,11 +878,53 @@ function renderPayment(){
     renderPayment();
   });
   const fee=serviceFeeForHouse(h),months=[...selected].sort();
-  $('paymentMath').textContent=monthDataWarning(h)?'بەرواری قەرزەکان تەواو نییە؛ پێویستی بە پشکنینە.':fee.amount?`${months.length} مانگ · ${months.join('، ')} · ${fmt(fee.amount)} × ${months.length} = ${fmt(fee.amount*months.length)}`:fee.rule;
-  $('paymentRecordBtn').disabled=saving||!months.length||!fee.amount||pending.some(p=>p.houseId===h.id);
+  $('paymentMath').textContent=pay?(monthDataWarning(h)?'بەرواری قەرزەکان تەواو نییە؛ پێویستی بە پشکنینە.':fee.amount?`${months.length} مانگ · ${months.join('، ')} · ${fmt(fee.amount)} × ${months.length} = ${fmt(fee.amount*months.length)}`:fee.rule):`${months.length} مانگ · ${months.join('، ')||'مانگ هەڵبژێرە'}${fee.amount?' · '+fmt(fee.amount*months.length):''}`;
+  $('paymentRecordBtn').textContent=pay?'تۆمارکردنی پارەدان':add?'زیادکردنی قەرز':'لابردنی قەرز';
+  $('paymentRecordBtn').className=`flex-1 ${pay?'bg-green-600 hover:bg-green-500':add?'bg-blue-700 hover:bg-blue-600':'bg-rose-600 hover:bg-rose-500'} text-white font-bold py-2.5 rounded-xl text-sm`;
+  $('paymentRecordBtn').disabled=saving||!months.length||(pay&&!fee.amount)||pending.some(p=>p.houseId===h.id);
+}
+async function saveDebtEdits(){
+  const house=houses.find(h=>h.id===activeId),months=[...selected].sort(),reason=$('debtReason').value.trim();
+  const target=paymentMode==='debt-add'?'unpaid':'skipped';
+  if(!house||!months.length||!['debt-add','debt-remove'].includes(paymentMode))return;
+  if(reason.length<3){alert('تکایە هۆکاری گۆڕانکاری بنووسە.');$('debtReason').focus();return;}
+  if(!navigator.onLine||metadata.fromCache){alert('بۆ گۆڕینی قەرز پەیوەندیی ئۆنلاین پێویستە.');return;}
+  if(pending.some(p=>p.houseId===house.id)){alert('پارەدانی چاوەڕوانکراو هەیە؛ سەرەتا سینکی بکە.');return;}
+  const original=new Map(months.map(key=>[key,accountingState(house,key)]));
+  if(months.some(key=>!parseMonthKey(key)||key>baghdadDate().slice(0,7)||key<'2019-01'||original.get(key)===target)){
+    alert('دۆخی مانگەکان گۆڕاوە. پەڕەکە نوێ بکەرەوە.');return;
+  }
+  const title=target==='unpaid'?'زیادکردنی قەرز':'لابردنی قەرز';
+  if(!confirm(`${house.complex} · ${label(house)}\n${title}: ${months.join('، ')}\nهۆکار: ${reason}\nدڵنیایت؟`))return;
+  saving=true;renderPayment();
+  try{
+    await runTransaction(db,async tx=>{
+      const ref=doc(db,'houses',house.id),snapshot=await tx.get(ref);
+      if(!snapshot.exists())throw Error('خانوو نەدۆزرایەوە.');
+      const live=normalize(snapshot.id,snapshot.data());
+      if(months.some(key=>accountingState(live,key)!==original.get(key)))throw Error('دۆخی مانگەکان لەلایەن کەسێکی ترەوە گۆڕاوە. نوێی بکەرەوە.');
+      const sets={paid:new Set(monthEntries(live.paidMonths).map(e=>e.key)),unpaid:new Set(monthEntries(live.unpaidMonths).map(e=>e.key)),skipped:new Set(monthEntries(live.skippedMonths).map(e=>e.key))};
+      const at=new Date().toISOString(),accountingOverrides={...(live.accountingOverrides||{})};
+      const payments=live.payments.map(event=>{
+        if(target!=='unpaid'||event.type!=='payment'||!Array.isArray(event.months))return event;
+        const reversed=months.filter(key=>original.get(key)==='paid'&&event.months.includes(key));
+        return reversed.length?{...event,reversedMonths:[...new Set([...(event.reversedMonths||[]),...reversed])],correctedAt:at}:event;
+      });
+      for(const key of months){
+        for(const set of Object.values(sets))set.delete(key);
+        sets[target].add(key);
+        accountingOverrides[key]={state:target,reason,updatedAt:at};
+        payments.push({id:crypto.randomUUID(),type:'debt-correction',month:key,previousState:original.get(key),newState:target,reason,recordedBy:'admin',createdAt:at});
+      }
+      tx.update(ref,{paidMonths:monthMap([...sets.paid]),unpaidMonths:monthMap([...sets.unpaid]),skippedMonths:monthMap([...sets.skipped]),totalPaid:sets.paid.size,totalUnpaid:sets.unpaid.size,accountingOverrides,payments,updatedAt:at,updatedBy:'admin',changeType:'debt-correction'});
+    });
+    $('paymentNotice').textContent=`✓ ${title}: ${months.join('، ')} — پاشەکەوتکرا.`;
+    saving=false;window.closePaymentModal();
+  }catch(e){alert('پاشەکەوت نەکرا: '+e.message);}finally{saving=false;if(activeId)renderPayment();}
 }
 window.recordPayment=async()=>{
   if(saving||!activeId)return;
+  if(paymentMode!=='pay'){await saveDebtEdits();return;}
   const h=houses.find(h=>h.id===activeId),months=[...selected].sort();
   if(!h||!months.length||!serviceFeeForHouse(h).amount)return;
   if(!confirm(`${label(h)} · ${resident(h)}\n${months.join('، ')}\n${fmt(serviceFeeForHouse(h).amount*months.length)}\nتۆمار بکرێت؟`))return;
