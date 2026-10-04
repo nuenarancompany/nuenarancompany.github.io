@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 310" role="img" aria-labelledby="title">
+  <title id="title">Nuenaran company logo</title>
+  <defs>
+    <linearGradient id="roof" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#63b7dd"/><stop offset="1" stop-color="#27559d"/></linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#3671b1"/><stop offset="1" stop-color="#29236c"/></linearGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#999b9b"/><stop offset="1" stop-color="#575959"/></linearGradient>
+  </defs>
+  <g fill="url(#tower)">
+    <path d="M271 155V117l29-18v70z"/>
+    <path d="M312 174V72l28-20v151z"/>
+    <path d="M360 47 415 14v203l-36 37V99l-19-14z"/>
+    <path d="M434 79 477 54v148l-43 18z"/>
+  </g>
+  <path fill="url(#edge)" d="M16 292 159 117l137 175h-31L160 151 45 292z"/>
+  <path fill="url(#roof)" d="m167 119 130 48 125 125H301z"/>
+  <path fill="url(#roof)" d="m383 249 58-40 82-26-92 109z"/>
+  <path fill="url(#edge)" d="m437 292 97-111 110 111h-29l-81-86-73 86z"/>
+  <g fill="#686b69">
+    <path d="M137 225h18v20h-18zm23 0h18v20h-18zm-23 25h18v20h-18zm23 0h18v20h-18z"/>
+    <path d="M520 246h13v17h-13zm18 0h13v17h-13zm-18 21h13v16h-13zm18 0h13v16h-13z"/>
+  </g>
+</svg>
