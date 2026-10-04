@@ -140,7 +140,7 @@ function sourceRows(workbook) {
       records.push({
         sourceSheet: sheetName, sourceRow: r + 1, sourceKey: `${sheetName}|${r + 1}`,
         sourceSerial: houseNum, houseNum, houseNumber: houseNum, complex,
-        name: val(row, nameCol), residentName: val(row, nameCol), ownerName: val(row, ownerNameCol) || (sheetName === 'قنديل' ? '' : val(row, nameCol)),
+        name: val(row, nameCol), residentName: val(row, nameCol), ownerName: val(row, ownerNameCol),
         status: val(row, ownerCol), normStatus: status(val(row, ownerCol)), nationality: val(row, nationalityCol), profession: val(row, professionCol),
         ownerPhone: val(row, ownerPhoneCol) || (sheetName === 'قنديل' ? '' : val(row, phoneCol)), mobile: val(row, phoneCol), phone: val(row, phoneCol), renterPhone: val(row, renterPhoneCol),
         block: val(row, blockCol), paid, skipped, nonzero, observed,
@@ -205,6 +205,7 @@ function mergedUpdate(i, c, asOf) {
     if (state === 'skipped') skipped.add(month);
   }
   const next = { ...old, ...Object.fromEntries(Object.entries(i).filter(([k]) => !['paid','skipped','nonzero','observed'].includes(k) && i[k] !== '')),
+    ownerName: i.ownerName,
     paidMonths: mapMonths(paid), skippedMonths: mapMonths(skipped), unpaidMonths: mapMonths(unpaid), totalPaid: paid.size, totalUnpaid: unpaid.size,
     sourceSchema: old.sourceSchema || 'per-complex-v1', lastExcelImport: asOf };
   delete next.id; return next;
