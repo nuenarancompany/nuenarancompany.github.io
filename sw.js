@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nuenaran-offline-v30';
+const CACHE_NAME = 'nuenaran-offline-v31';
 const LOCAL = ['./','./index.html','./admin.html','./ceo.html','./assets/nuenaran-logo.svg'];
 const REMOTE = ['https://cdn.tailwindcss.com/','https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js','https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js','https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;600;700&display=swap'];
 const localURLs = new Set(LOCAL.map(path=>new URL(path,self.registration.scope).href));

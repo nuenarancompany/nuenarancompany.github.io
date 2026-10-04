@@ -160,7 +160,7 @@ body { line-height:1.65; }
 
   <!-- Search -->
   <div class="flex gap-2 mb-3 flex-wrap">
-    <input id="searchBox" type="search" placeholder="🔍  گەڕان — ژمارە، ناو یان تەلەفۆن"
+    <input id="searchBox" type="search" placeholder="🔍  گەڕان — ژمارەی خانوو یان ناو"
       class="flex-1 min-w-48 px-4 py-2 rounded-xl border border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none bg-white text-sm" dir="rtl">
     <select id="debtFilter" class="border border-gray-300 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none">
       <option value="">هەموو</option>
@@ -942,12 +942,11 @@ function applyFilters(){
       if (st && h.normStatus !== st) return false;
       if (debt && visibleDebtMonths(h) < debt) return false;
       if (q) {
-        // Search the visible identity and contact fields as well as the exact unit.
+        // Search only the house number and resident/owner names.
         const tenant = searchText(h.tenantName);
         const houseNum = searchText(h.houseNum);
-        const block = searchText(h.block);
-        const owner = searchText(h.ownerName), renterPhone = searchText(h.renterPhone), ownerPhone = searchText(h.ownerPhone), profession = searchText(h.profession);
-        if (!(tenant.includes(q) || houseNum.includes(q) || block.includes(q) || owner.includes(q) || renterPhone.includes(q) || ownerPhone.includes(q) || profession.includes(q))) return false;
+        const owner = searchText(h.ownerName);
+        if (!(tenant.includes(q) || houseNum.includes(q) || owner.includes(q))) return false;
       }
       return true;
     });
