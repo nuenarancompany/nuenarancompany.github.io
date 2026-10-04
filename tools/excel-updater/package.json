@@ -1,0 +1,13 @@
+{
+  "name": "nuenaran-excel-updater",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local, preview-first Excel import into the Nuenaran Firestore houses collection",
+  "scripts": {
+    "preview": "node updater.cjs --preview",
+    "apply": "node updater.cjs --apply"
+  },
+  "dependencies": {
+    "xlsx": "0.18.5"
+  }
+}

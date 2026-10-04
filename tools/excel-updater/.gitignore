@@ -1,0 +1,11 @@
+serviceAccountKey.json
+private-key-path.txt
+*service-account*.json
+*.pem
+*.key
+.env*
+backups/
+node_modules/
+*.xlsx
+*.xls
+*.zip
