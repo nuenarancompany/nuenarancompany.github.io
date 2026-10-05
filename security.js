@@ -5,7 +5,9 @@ import {serviceFeeForHouse} from './service-fees.js';
 const db=getFirestore(initializeApp({apiKey:'AIzaSyBe2dBVhBMFR7ZAR3Z26ZG0q8e2KQTHlII',authDomain:'nuenaran.firebaseapp.com',projectId:'nuenaran',appId:'1:271798697223:web:8dade3ac017ce1a9c399a2'}));
 const $=id=>document.getElementById(id),esc=escapeHTML,size=20;
 let houses=[],page=0,stop=null;
-const ready=enableMultiTabIndexedDbPersistence(db).catch(()=>{});
+// Cache is optional: blocked storage must never prevent login or live reads.
+enableMultiTabIndexedDbPersistence(db).catch(()=>{});
+function session(value){try{if(value===undefined)return sessionStorage.getItem('nuenaran-security')==='1';if(value)sessionStorage.setItem('nuenaran-security','1');else sessionStorage.removeItem('nuenaran-security');}catch{}return false;}
 function render(){
  const q=searchText($('search').value),complex=$('complex').value;
  const matches=houses.filter(h=>(!complex||h.complex===complex)&&(!q||[h.houseNum,h.residentName,h.ownerName].some(v=>searchText(v).includes(q))));
@@ -20,7 +22,7 @@ function render(){
  $('prev').disabled=page===0;$('next').disabled=(page+1)*size>=matches.length;
 }
 async function start(){
- $('login').hidden=true;$('app').hidden=false;await ready;
+ $('login').hidden=true;$('app').hidden=false;
  stop=onSnapshot(collection(db,'houses'),{includeMetadataChanges:true},snap=>{
  houses=snap.docs.map(doc=>{const d=doc.data();return {...d,id:doc.id,complex:d.complex??d.complexName??'',houseNum:d.houseNum??d.houseNumber??'',residentName:d.residentName??d.name??'',ownerName:d.ownerName??d.landlordName??'',mobile:d.mobile??d.phone??'',renterPhone:d.renterPhone??d.tenantPhone??'',ownerPhone:d.ownerPhone??d.landlordPhone??''};}).sort(compareHouses);
  const selected=$('complex').value;
@@ -30,8 +32,8 @@ async function start(){
  },()=>{$('status').textContent='داتا نەگەیشت؛ ئینتەرنێت یان دەستپێگەیشتن بپشکنە.';$('status').className='error';});
 }
 // Same convenience gate as the existing index. This is not server-side authorization.
-$('login').onsubmit=e=>{e.preventDefault();if($('password').value.trim()==='nuenaran.497'){sessionStorage.setItem('nuenaran-security','1');start();}else $('error').textContent='وشەی نهێنی هەڵەیە';};
-$('logout').onclick=()=>{stop?.();houses=[];$('results').textContent='';sessionStorage.removeItem('nuenaran-security');$('app').hidden=true;$('login').hidden=false;$('password').value='';};
+$('login').onsubmit=e=>{e.preventDefault();if($('password').value.trim()==='nuenaran.497'){session(true);start();}else $('error').textContent='وشەی نهێنی هەڵەیە';};
+$('logout').onclick=()=>{stop?.();houses=[];$('results').textContent='';session(false);$('app').hidden=true;$('login').hidden=false;$('password').value='';};
 for(const id of ['complex','search'])$(id).addEventListener(id==='search'?'input':'change',()=>{page=0;render();});
 $('prev').onclick=()=>{page--;render();};$('next').onclick=()=>{page++;render();};
-if(sessionStorage.getItem('nuenaran-security')==='1')start();
+if(session())start();
