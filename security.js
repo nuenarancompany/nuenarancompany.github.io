@@ -1,6 +1,6 @@
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
 import {getFirestore,collection,onSnapshot,enableMultiTabIndexedDbPersistence} from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
-import {searchText,escapeHTML,compareHouses,dueEntries,paidEntries,monthDataWarning} from './business.js';
+import {searchText,escapeHTML,compareHouses,dueEntries,monthDataWarning} from './business.js';
 import {serviceFeeForHouse} from './service-fees.js';
 const db=getFirestore(initializeApp({apiKey:'AIzaSyBe2dBVhBMFR7ZAR3Z26ZG0q8e2KQTHlII',authDomain:'nuenaran.firebaseapp.com',projectId:'nuenaran',appId:'1:271798697223:web:8dade3ac017ce1a9c399a2'}));
 const $=id=>document.getElementById(id),esc=escapeHTML,size=20;
@@ -13,10 +13,10 @@ function render(){
  const matches=houses.filter(h=>(!complex||h.complex===complex)&&(!q||[h.houseNum,h.residentName,h.ownerName].some(v=>searchText(v).includes(q))));
  page=Math.min(page,Math.max(0,Math.ceil(matches.length/size)-1));
  $('results').innerHTML=matches.slice(page*size,(page+1)*size).map(h=>{
-  const due=dueEntries(h),paid=paidEntries(h),fee=serviceFeeForHouse(h),review=monthDataWarning(h);
+  const due=dueEntries(h),fee=serviceFeeForHouse(h),review=monthDataWarning(h);
   const value=v=>esc(v||'—');
   const debt=review?'پێویستی بە پشکنینە':fee.amount?`${(due.length*fee.amount).toLocaleString('en-US')} IQD`:'نرخ دیاری نەکراوە';
-  return `<article><h2>${value(h.complex)} — ${value(h.houseNum)}</h2><dl><dt>ناوی دانیشتوو</dt><dd>${value(h.residentName)}</dd><dt>ناوی خاوەن خانوو</dt><dd>${value(h.ownerName)}</dd><dt>مۆبایل</dt><dd dir="ltr">${value(h.mobile)}</dd><dt>تەلەفۆنی کرێچی</dt><dd dir="ltr">${value(h.renterPhone)}</dd><dt>تەلەفۆنی خاوەن موڵک</dt><dd dir="ltr">${value(h.ownerPhone)}</dd></dl><footer>کۆی قەرزی پێشوو: <b dir="ltr">${esc(debt)}</b><br>مانگی نەدراو: ${due.length} · مانگی دراو: ${paid.length}<small>قەرزی مانگەکانی پێش مانگی ئێستا؛ مانگە تێپەڕدراوەکان حساب ناکرێن.</small></footer></article>`;
+  return `<article><h2>${value(h.complex)} — ${value(h.houseNum)}</h2><dl><dt>ناوی دانیشتوو</dt><dd>${value(h.residentName)}</dd><dt>ناوی خاوەن خانوو</dt><dd>${h.ownerName?`<strong style="background:#fef3c7;color:#713f12;padding:3px 6px;border-radius:5px">${esc(h.ownerName)}</strong>`:'—'}</dd><dt>مۆبایل</dt><dd dir="ltr">${value(h.mobile)}</dd><dt>تەلەفۆنی کرێچی</dt><dd dir="ltr">${value(h.renterPhone)}</dd><dt>تەلەفۆنی خاوەن موڵک</dt><dd dir="ltr">${value(h.ownerPhone)}</dd></dl><footer><b>مانگی نەدراو: ${due.length}</b><br>کۆی قەرزی: <b dir="ltr">${esc(debt)}</b><small>قەرزی مانگەکانی پێش مانگی ئێستا؛ مانگە تێپەڕدراوەکان حساب ناکرێن.</small></footer></article>`;
  }).join('')||'<p>هیچ خانوویەک نەدۆزرایەوە.</p>';
  $('count').textContent=`${matches.length} خانوو · ${page+1} / ${Math.max(1,Math.ceil(matches.length/size))}`;
  $('prev').disabled=page===0;$('next').disabled=(page+1)*size>=matches.length;
