@@ -6,4 +6,12 @@
 <header><img src="assets/nuenaran-logo.svg" alt="نوینەران"><span>کۆمپانیای نوینەران — ئاسایش</span></header>
 <main><form id="login"><img src="assets/nuenaran-logo.svg" alt="نوینەران"><h2>چوونەژوورەوە</h2><input id="password" type="password" autocomplete="current-password" aria-label="وشەی نهێنی" placeholder="وشەی نهێنی" required><button>چوونەژوورەوە</button><p id="error" role="alert"></p></form>
 <section id="app" hidden><button id="logout">دەرچوون</button><p id="status" role="status">چاوەڕوانی داتا…</p><label for="complex">کۆمپڵێکس</label><select id="complex"><option value="">هەموو کۆمپڵێکسەکان</option></select><label for="search">ژمارەی خانوو یان ناو</label><input id="search" type="search" placeholder="گەڕان بە ژمارەی خانوو یان ناو"><div id="results"></div><nav><button id="prev">پێشوو</button><span id="count"></span><button id="next">دواتر</button></nav></section></main>
-<script type="module" src="security.js"></script></body></html>
+<script>
+// Keep a failed module load from silently submitting/reloading the login form.
+const loginForm=document.getElementById('login'),loginError=document.getElementById('error');
+loginForm.addEventListener('submit',event=>event.preventDefault());
+loginForm.querySelector('button').disabled=true;
+loginError.textContent='Loading login…';
+const loadTimer=setTimeout(()=>{loginError.textContent='Login could not load. Check your internet connection and refresh this page.';},12000);
+import('./security.js?v=20261005-2').then(()=>{clearTimeout(loadTimer);loginForm.querySelector('button').disabled=false;loginError.textContent='';}).catch(()=>{clearTimeout(loadTimer);loginError.textContent='Login could not load. Open the online security page, check your internet connection, then refresh.';});
+</script></body></html>
